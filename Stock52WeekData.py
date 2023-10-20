@@ -9,7 +9,7 @@ sys.path.insert(1, 'C:/Python/ConfigReader/')
 import PropReader as propreader
 import glob
 import shutil
-
+#Adding Comment
 def accessAmazon():
     for i in range(20):
         # create instance of Chrome webdriver
