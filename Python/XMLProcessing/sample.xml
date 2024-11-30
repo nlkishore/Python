@@ -1,0 +1,8 @@
+<root>
+    <parent attribute="parent_value">
+        <child attribute="child1_value">child1_text</child>
+        <child attribute="child2_value">
+            <subchild attribute="subchild_value">subchild_text</subchild>
+        </child>
+    </parent>
+</root>
