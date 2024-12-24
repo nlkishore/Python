@@ -4,6 +4,9 @@ https://copilot.microsoft.com/chats/j7huyRhNDC3GAQMUHj78m
 https://copilot.microsoft.com/chats/QgBT6HTQxKmcz3f84PCfE
 https://copilot.microsoft.com/chats/hqi23hg8FffH54qWmBcVA
 
+
+https://copilot.microsoft.com/chats/BJrV9FnjBryDwb78g59qy - Pub/sub design pattern micros service
+
 Prompts:
 
 For Java8 environment, share an example to create PMD ruleset to find the call hierarchy as stand alone java project , step by step guide on Java and PMD cli interfacce to invoke call hierarchy rule on Source Code located in other Physical Folder of the machien where CalHeirarchy rule there
