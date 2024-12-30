@@ -1,0 +1,1 @@
+awk '/<VNeTaxInquiryResponse>/{flag=1; next} /<\/VNeTaxInquiryResponse>/{flag=0} flag' filename.xml > output.txt
