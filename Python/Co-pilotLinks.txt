@@ -4,6 +4,8 @@ https://copilot.microsoft.com/chats/j7huyRhNDC3GAQMUHj78m
 https://copilot.microsoft.com/chats/QgBT6HTQxKmcz3f84PCfE
 https://copilot.microsoft.com/chats/hqi23hg8FffH54qWmBcVA
 
+https://chatgpt.com/share/677e8324-aee0-800f-baa1-ec631be8f306
+
 
 https://copilot.microsoft.com/chats/BJrV9FnjBryDwb78g59qy - Pub/sub design pattern micros service
 
