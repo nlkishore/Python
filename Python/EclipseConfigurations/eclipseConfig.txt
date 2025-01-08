@@ -1,0 +1,145 @@
+Given a sceario, code is downloaded from bitbucket and imported as Eclipse project, how to avoid compilation and make sure application runs, by using ant build
+To ensure that your Eclipse project runs without manual compilation and to manage builds using Ant, you can configure your Eclipse environment to use an Ant build script for building your project. This way, you can avoid potential compilation issues within Eclipse itself and ensure that the application runs smoothly.
+
+Here's a step-by-step guide to configure Eclipse to use Ant for your project:
+
+Download the Code from Bitbucket:
+
+Clone your Bitbucket repository to your local machine.
+
+Import the Project into Eclipse:
+
+Open Eclipse.
+
+Go to File > Import > Existing Projects into Workspace.
+
+Select the root directory where your project is located.
+
+Click Finish.
+
+Create an Ant Build Script (build.xml):
+
+Create a build.xml file in the root directory of your project (if you don't already have one).
+
+Define your Ant tasks in the build.xml file. Here's an example of a simple Ant build script:
+
+xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="MyProject" default="run" basedir=".">
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}"/>
+    </target>
+
+    <target name="run" depends="compile">
+        <java classname="com.example.Main" fork="true" failonerror="true">
+            <classpath>
+                <pathelement location="${classes.dir}"/>
+            </classpath>
+        </java>
+    </target>
+</project>
+Adjust the paths and the main class name as necessary for your project structure.
+
+Configure Eclipse to Use Ant for Building:
+
+In Eclipse, go to Window > Preferences.
+
+Navigate to Ant > Runtime.
+
+Add the build.xml file to the Ant buildfiles by clicking on the Add Buildfiles button and selecting your build.xml.
+
+Run the Ant Build Script:
+
+In Eclipse, open the Ant view by going to Window > Show View > Ant.
+
+Add the build.xml file to the Ant view by right-clicking in the Ant view and selecting Add Buildfiles.
+
+You should now see the targets defined in your build.xml file (e.g., clean, compile, run).
+
+You can run these targets by double-clicking on them in the Ant view.
+
+By following these steps, you can ensure that the Ant build script handles the compilation and running of your application, thereby avoiding potential compilation issues within Eclipse itself. This setup allows you to manage the entire build process through Ant and ensures consistent builds across different environments.
+
+Let me know if you need further assistance or adjustments
+
+1github.com
+2github.com
+is there any setting to tel eclipse not to compile when project is downloaded
+Yes, you can configure Eclipse to prevent automatic compilation of your project upon downloading or importing. To do this, you'll need to disable the "Build Automatically" option in Eclipse. Here are the steps to follow:
+
+Open Eclipse:
+
+Launch your Eclipse IDE.
+
+Disable Automatic Build:
+
+Go to the Project menu in the top navigation bar.
+
+Uncheck the Build Automatically option.
+
+By unchecking this option, Eclipse will no longer automatically compile your project when it is imported or when changes are made. Instead, you will need to manually trigger builds when necessary.
+
+Manually Build Project:
+
+When you need to build your project, you can do so manually by selecting Project > Build Project or Project > Build All.
+
+This setup allows you to control when the project is compiled, ensuring that it doesn't happen automatically and potentially interfere with your Ant build process.
+
+If you need any additional guidance or have other questions, feel free to ask!
+
+how to make eclipse compilation build auto permanent disable
+To make the "Build Automatically" option permanently disabled in Eclipse, you can adjust the Eclipse settings by modifying the workspace preferences or the Eclipse configuration file. Here's how you can do it:
+
+Method 1: Modify Workspace Preferences
+Open Eclipse:
+
+Launch your Eclipse IDE.
+
+Disable Automatic Build:
+
+Go to the Project menu in the top navigation bar.
+
+Uncheck the Build Automatically option.
+
+Save Preferences:
+
+Go to File > Save Preferences As.
+
+Save the preferences to a file, so you can reuse them in other workspaces.
+
+When you open Eclipse with this workspace, the "Build Automatically" option will remain disabled unless manually changed.
+
+Method 2: Modify the Eclipse Configuration File
+Locate the Eclipse Configuration File:
+
+The configuration file is typically located in the workspace metadata directory:
+
+<workspace_dir>/.metadata/.plugins/org.eclipse.core.resources/.projects/.settings/org.eclipse.core.resources.prefs
+Edit the Configuration File:
+
+Open the org.eclipse.core.resources.prefs file in a text editor.
+
+Add or modify the following line to disable automatic builds:
+
+description.autobuilding=false
+Save the File:
+
+Save the org.eclipse.core.resources.prefs file.
+
+By setting description.autobuilding=false, you ensure that automatic building is disabled for all projects within the workspace.
+
+Additional Tip: Apply Preferences Across Workspaces
+If you want to apply this setting across multiple workspaces, you can copy the modified org.eclipse.core.resources.prefs file to the corresponding location in each workspace.
+
+With these methods, you can make sure that the automatic build is permanently disabled in Eclipse, allowing you to control when builds occur manually or through your Ant build script.
+
+Feel free to ask if you need further guidance or assistance!
