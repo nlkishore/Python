@@ -8,6 +8,10 @@ https://chatgpt.com/share/677e8324-aee0-800f-baa1-ec631be8f306
 
 
 https://copilot.microsoft.com/chats/BJrV9FnjBryDwb78g59qy - Pub/sub design pattern micros service
+https://copilot.microsoft.com/chats/1rZRwffqHjiUg3dGcfYoP - to find the git diff and capture the diff to out put file
+https://copilot.microsoft.com/chats/jdt3sSmVP6giNstUyXVyY -- git Ignore file
+
+
 
 Prompts:
 
