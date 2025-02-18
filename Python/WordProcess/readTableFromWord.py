@@ -37,7 +37,7 @@ def readAllTables():
         print("\n")  # Add a newline for better readability between tables
 
 def processTableDataIntodf(data):
-    import pandas as pds
+    import pandas as pd
     df = pd.DataFrame(data[1:], columns=data[0])  # Assuming the first row is the header
     print(df)
 
