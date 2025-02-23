@@ -24,14 +24,16 @@ def get_commit_details(repo_path, start_date, end_date, output_dir):
             date_committed = commit_lines[i + 1]
             head_refs = commit_lines[i + 2] if len(commit_lines) > i + 2 else ""
             
+            # Format date for folder name
+            formatted_date = datetime.strptime(date_committed, "%Y-%m-%d %H:%M:%S %z").strftime("%Y%m%d-%H%M%S")
+            commit_folder_name = f"{formatted_date}_{commit_id}"
+            commit_folder = os.path.join(output_dir, commit_folder_name)
+            os.makedirs(commit_folder, exist_ok=True)
+            
             # Get files changed in the commit
             cmd_files_changed = ["git", "show", "--pretty=format:", "--name-only", commit_id]
             files_changed_info = subprocess.run(cmd_files_changed, cwd=repo_path, capture_output=True, text=True, check=True)
             files_changed = files_changed_info.stdout.strip().split("\n")
-            
-            # Copy files to the destination folder (checkout at specific commit)
-            commit_folder = os.path.join(output_dir, commit_id)
-            os.makedirs(commit_folder, exist_ok=True)
             
             file_paths = []
             for file in files_changed:
