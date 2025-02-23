@@ -29,19 +29,25 @@ def get_commit_details(repo_path, start_date, end_date, output_dir):
             files_changed_info = subprocess.run(cmd_files_changed, cwd=repo_path, capture_output=True, text=True, check=True)
             files_changed = files_changed_info.stdout.strip().split("\n")
             
-            # Copy files to the destination folder
+            # Copy files to the destination folder (checkout at specific commit)
             commit_folder = os.path.join(output_dir, commit_id)
             os.makedirs(commit_folder, exist_ok=True)
             
             file_paths = []
             for file in files_changed:
                 file_path = os.path.join(repo_path, file)
-                if os.path.exists(file_path):
-                    dest_path = os.path.join(commit_folder, os.path.basename(file))
-                    shutil.copy2(file_path, dest_path)
-                    file_paths.append(dest_path)
-                else:
-                    file_paths.append("File not found")
+                if file:
+                    # Extract file content from the specific commit
+                    cmd_checkout = ["git", "show", f"{commit_id}:{file}"]
+                    file_content = subprocess.run(cmd_checkout, cwd=repo_path, capture_output=True, text=True, check=False)
+                    
+                    if file_content.returncode == 0:
+                        dest_path = os.path.join(commit_folder, os.path.basename(file))
+                        with open(dest_path, "w", encoding="utf-8") as f:
+                            f.write(file_content.stdout)
+                        file_paths.append(dest_path)
+                    else:
+                        file_paths.append("File not found in commit")
             
             commit_data.append([commit_id, date_committed, ", ".join(files_changed), ", ".join(file_paths)])
         
