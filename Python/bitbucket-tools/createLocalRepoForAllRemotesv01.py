@@ -45,8 +45,8 @@ def cleanup_local_repos(repo_base_path, repositories):
 
 def clone_repos(git_base_url, repo_base_path, repositories, username=None, password=None):
     """Clones all remote repositories and checks out the correct branches."""
-    if not os.path.exists(repo_base_path):
-        os.makedirs(repo_base_path)  
+    #if not os.path.exists(repo_base_path):
+    #    os.makedirs(repo_base_path)  
 
     for repo, branch in repositories.items():
         if username and password:

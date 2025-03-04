@@ -3,7 +3,7 @@ from configparser import ConfigParser
 
 def readConfigValue(section,tkey):
     parser = ConfigParser()
-    parser.read("file.ini")
+    parser.read("/Users/yaswitha/k8s/python/Python/Python/ConfigReader/file.ini")
     tvalue=''
     for element in parser.sections():
         if (section==element):
@@ -16,4 +16,4 @@ def readConfigValue(section,tkey):
             #print
     return tvalue
 
-print(readConfigValue('wiki','username'))
+print(f"{readConfigValue('wiki','username')}")
