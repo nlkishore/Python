@@ -1,0 +1,6 @@
+logging:
+  level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "logs/app.log"  # Specify log directory
+  rotate: true  # Enable log rotation
+  max_size: 5  # Max log file size in MB
+  backup_count: 3  # Number of backup logs to keep

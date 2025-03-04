@@ -5,6 +5,20 @@ import shutil
 import configparser
 import urllib.parse
 
+# Add logging_framework to Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "loggingFramework")))
+
+# Import the custom logger
+from logging_config import LOGGER
+
+
+
+# Use logging in the application
+LOGGER.info("Application started successfully")
+LOGGER.debug("This is a debug message")
+LOGGER.warning("Potential issue detected")
+LOGGER.error("An error occurred in the application")
+LOGGER.critical("Critical failure!")
 def encode_credentials(username, password):
     """Encodes credentials to safely use them in a Git URL."""
     encoded_password = urllib.parse.quote(password, safe="")
