@@ -1,109 +1,130 @@
 import paramiko
 import configparser
-import threading
 import os
-import json
-import datetime
 
 CONFIG_FILE = "servers.ini"
-HISTORY_FILE = "command_history.json"
 
-# Load configurations
+# Load server and command configurations
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-COUNTRY_SERVERS = {section: dict(config[section]) for section in config.sections() if section.startswith("server_")}
-COMMANDS = dict(config["Commands"]) if "Commands" in config else {}
+SERVERS = {section: dict(config[section]) for section in config.sections() if section.startswith("server_")}
+COMMANDS = {section: dict(config[section]) for section in config.sections() if section.startswith("commands_")}
 
 current_server = None
 
 
-def ssh_connect(host, username, key_path):
-    """Establish an SSH connection using a private key."""
+def connect_to_server(server_config):
+    """Establish an SSH connection to the Unix server."""
     try:
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        key = paramiko.RSAKey(filename=os.path.expanduser(key_path))
-        client.connect(hostname=host, username=username, pkey=key, timeout=10)
-        return client
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(
+            hostname=server_config["host"],
+            port=int(server_config["port"]),
+            username=server_config["username"],
+            password=server_config["password"]  # Use SSH key authentication if preferred
+        )
+        return ssh
     except Exception as e:
-        print(f"Error connecting to {host}: {e}")
+        print(f"❌ Connection failed: {e}")
         return None
 
 
-def execute_remote_command(server, command):
-    """Execute command on a remote server."""
-    host, username, key_path = server["host"], server["username"], server["key_path"]
-    client = ssh_connect(host, username, key_path)
-    if not client:
-        return f"Failed to connect to {host}"
+def execute_command(server_config, command_key):
+    """Execute a predefined command on the remote server."""
+    if command_key not in COMMANDS[current_server]:
+        print(f"⚠️ Command '{command_key}' not found for {current_server}!")
+        return
 
-    stdin, stdout, stderr = client.exec_command(command)
-    output = stdout.read().decode()
-    error = stderr.read().decode()
+    command = COMMANDS[current_server][command_key]
+    ssh = connect_to_server(server_config)
+    if not ssh:
+        return
 
-    client.close()
-    
-    return output if output else error
+    try:
+        stdin, stdout, stderr = ssh.exec_command(command)
+        output = stdout.read().decode()
+        error = stderr.read().decode()
 
+        if output:
+            print(f"\n✅ Output:\n{output}")
+        if error:
+            print(f"\n❌ Error:\n{error}")
 
-def parallel_execution(command):
-    """Execute a command on all servers in parallel."""
-    threads = []
-    results = {}
-
-    def run_on_server(country, server):
-        results[country] = execute_remote_command(server, command)
-
-    for country, server in COUNTRY_SERVERS.items():
-        thread = threading.Thread(target=run_on_server, args=(country, server))
-        threads.append(thread)
-        thread.start()
-
-    for thread in threads:
-        thread.join()
-
-    return results
+    finally:
+        ssh.close()
 
 
-def save_history(command):
-    """Save executed command history."""
-    history = load_history()
-    history.append({"timestamp": str(datetime.datetime.now()), "command": command})
-    with open(HISTORY_FILE, "w") as file:
-        json.dump(history, file)
+def transfer_file(server_config, local_path, remote_path, upload=True):
+    """Transfer files using SCP (upload/download)."""
+    ssh = connect_to_server(server_config)
+    if not ssh:
+        return
 
+    try:
+        sftp = ssh.open_sftp()
+        if upload:
+            sftp.put(local_path, remote_path)
+            print(f"✅ Uploaded {local_path} to {remote_path}")
+        else:
+            sftp.get(remote_path, local_path)
+            print(f"✅ Downloaded {remote_path} to {local_path}")
 
-def load_history():
-    """Load command history from JSON file."""
-    if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, "r") as file:
-            return json.load(file)
-    return []
+    except Exception as e:
+        print(f"❌ SCP transfer failed: {e}")
 
-
-def execute_predefined_commands():
-    """Execute all predefined commands from the INI file across servers."""
-    for cmd_name, command in COMMANDS.items():
-        print(f"\nExecuting command: {cmd_name} -> {command}\n")
-        results = parallel_execution(command)
-        
-        for country, output in results.items():
-            print(f"\n📌 Output from {country.upper()} Server:")
-            print(output if output else "No output received.")
-
-        save_history(command)
+    finally:
+        sftp.close()
+        ssh.close()
 
 
 def main():
-    """Main function to handle execution."""
+    """Main function to handle user interaction."""
     global current_server
 
-    print("\n🌍 Multi-Country Log Analysis Tool\n")
-    print("Available countries:", ", ".join(COUNTRY_SERVERS.keys()))
-    
-    # Automatically execute predefined commands from INI file
-    execute_predefined_commands()
+    print("\n🌍 Multi-Country Unix Automation Tool (SG, MY, OV, HK, ID, TH, CN)\n")
+    print("Available servers:", ", ".join(SERVERS.keys()))
+
+    while True:
+        cmd = input("\nEnter command (or 'switch <country>', 'run <command>', 'upload <local> <remote>', 'download <remote> <local>', 'exit'): ").strip().lower()
+
+        if cmd == "exit":
+            print("Exiting...")
+            break
+
+        elif cmd.startswith("switch "):
+            country = cmd.split(" ")[1]
+            if country in SERVERS:
+                current_server = country
+                print(f"✅ Switched to {current_server.upper()} server: {SERVERS[current_server]['host']}")
+            else:
+                print(f"❌ Invalid country! Available: {', '.join(SERVERS.keys())}")
+
+        elif cmd.startswith("run "):
+            if not current_server:
+                print("⚠️ No server selected! Use 'switch <country>' first.")
+                continue
+
+            command_key = cmd.split(" ")[1]
+            execute_command(SERVERS[current_server], command_key)
+
+        elif cmd.startswith("upload ") or cmd.startswith("download "):
+            if not current_server:
+                print("⚠️ No server selected! Use 'switch <country>' first.")
+                continue
+
+            parts = cmd.split(" ")
+            if len(parts) != 3:
+                print("⚠️ Invalid SCP command! Use 'upload <local> <remote>' or 'download <remote> <local>'")
+                continue
+
+            action, local_path, remote_path = parts
+            upload = action == "upload"
+            transfer_file(SERVERS[current_server], local_path, remote_path, upload)
+
+        else:
+            print("⚠️ Invalid command! Use 'switch <country>', 'run <command>', 'upload <local> <remote>', 'download <remote> <local>'.")
 
 
 if __name__ == "__main__":
