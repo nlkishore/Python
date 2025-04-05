@@ -3,6 +3,26 @@ import zipfile
 import shutil
 import xml.etree.ElementTree as ET
 
+
+
+def extract_ear_safe(ear_path, extract_to):
+    war_filename = None
+    os.makedirs(extract_to, exist_ok=True)
+
+    with zipfile.ZipFile(ear_path, 'r') as ear_zip:
+        for item in ear_zip.infolist():
+            if item.filename.endswith(".war"):
+                war_filename = item.filename
+                # Save WAR as binary (don't extract it)
+                with open(os.path.join(extract_to, war_filename), "wb") as f:
+                    f.write(ear_zip.read(item.filename))
+            else:
+                # Extract all other files normally
+                ear_zip.extract(item, extract_to)
+
+    return war_filename
+
+
 def extract_zip(zip_path, extract_to):
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extract_to)
@@ -49,7 +69,7 @@ def update_ear_webxml(ear_path, target_servlet, param_name, new_value, output_ea
     os.makedirs(temp_war_dir, exist_ok=True)
 
     # Step 1: Extract EAR but skip .war contents
-    with zipfile.ZipFile(ear_path, 'r') as ear_zip:
+    '''with zipfile.ZipFile(ear_path, 'r') as ear_zip:
         for item in ear_zip.infolist():
             extracted_path = os.path.join(temp_ear_dir, item.filename)
             if item.filename.endswith(".war"):
@@ -57,11 +77,13 @@ def update_ear_webxml(ear_path, target_servlet, param_name, new_value, output_ea
                 with open(extracted_path, "wb") as f:
                     f.write(ear_zip.read(item.filename))
             else:
-                ear_zip.extract(item, temp_ear_dir)
-
+                ear_zip.extract(item, temp_ear_dir)'''
+    # Step 1: Extract EAR safely
+    war_filename = extract_ear_safe(ear_path, temp_ear_dir)
     if not war_filename:
         print("❌ No .war found in the EAR file.")
-        return
+    return
+
 
     war_path = os.path.join(temp_ear_dir, war_filename)
 
