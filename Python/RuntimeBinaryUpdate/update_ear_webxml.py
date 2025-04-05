@@ -2,7 +2,6 @@ import os
 import zipfile
 import shutil
 import xml.etree.ElementTree as ET
-import platform
 
 def extract_zip(zip_path, extract_to):
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -37,65 +36,68 @@ def update_web_xml(web_xml_path, target_servlet, param_name, new_param_value):
 
 
 def update_ear_webxml(ear_path, target_servlet, param_name, new_value, output_ear):
-    temp_dir = "ear_temp"
-    war_temp_dir = "war_temp"
+    temp_ear_dir = "ear_temp"
+    temp_war_dir = "war_temp"
+    war_filename = None
 
-    # Cleanup old temp dirs
-    for folder in [temp_dir, war_temp_dir]:
-        if os.path.exists(folder):
-            shutil.rmtree(folder)
+    # Cleanup
+    for d in [temp_ear_dir, temp_war_dir]:
+        if os.path.exists(d):
+            shutil.rmtree(d)
 
-    os.makedirs(temp_dir)
-    os.makedirs(war_temp_dir)
+    os.makedirs(temp_ear_dir, exist_ok=True)
+    os.makedirs(temp_war_dir, exist_ok=True)
 
-    # Step 1: Extract EAR
-    extract_zip(ear_path, temp_dir)
+    # Step 1: Extract EAR but skip .war contents
+    with zipfile.ZipFile(ear_path, 'r') as ear_zip:
+        for item in ear_zip.infolist():
+            extracted_path = os.path.join(temp_ear_dir, item.filename)
+            if item.filename.endswith(".war"):
+                war_filename = item.filename
+                with open(extracted_path, "wb") as f:
+                    f.write(ear_zip.read(item.filename))
+            else:
+                ear_zip.extract(item, temp_ear_dir)
 
-    # Step 2: Find WAR file
-    war_file = None
-    for root, dirs, files in os.walk(temp_dir):
-        for file in files:
-            if file.endswith(".war"):
-                war_file = os.path.join(root, file)
-                break
-
-    if not war_file:
-        print("❌ WAR file not found in EAR.")
+    if not war_filename:
+        print("❌ No .war found in the EAR file.")
         return
 
-    # Step 3: Extract WAR
-    extract_zip(war_file, war_temp_dir)
+    war_path = os.path.join(temp_ear_dir, war_filename)
 
-    # Step 4: Locate and update web.xml
-    web_xml_path = os.path.join(war_temp_dir, "WEB-INF", "web.xml")
+    # Step 2: Extract WAR to modify web.xml
+    with zipfile.ZipFile(war_path, 'r') as war_zip:
+        war_zip.extractall(temp_war_dir)
+
+    # Step 3: Update web.xml
+    web_xml_path = os.path.join(temp_war_dir, "WEB-INF", "web.xml")
     if not os.path.exists(web_xml_path):
-        print("❌ web.xml not found inside WAR.")
+        print("❌ web.xml not found in WAR.")
         return
 
     update_web_xml(web_xml_path, target_servlet, param_name, new_value)
 
-    # Step 5: Repackage WAR
-    updated_war_path = os.path.join(temp_dir, os.path.basename(war_file))
-    rezip_folder(war_temp_dir, updated_war_path)
+    # Step 4: Rezip WAR
+    rezip_folder(temp_war_dir, "updated.war")
+    updated_war = "updated.war"
+    shutil.move(updated_war, war_path)
 
-    # Step 6: Repackage EAR
-    rezip_folder(temp_dir, output_ear)
+    # Step 5: Repackage EAR
+    rezip_folder(temp_ear_dir, output_ear)
 
     # Cleanup
-    shutil.rmtree(temp_dir)
-    shutil.rmtree(war_temp_dir)
+    shutil.rmtree(temp_ear_dir)
+    shutil.rmtree(temp_war_dir)
 
-    print(f"✅ EAR file updated and saved to: {output_ear}")
+    print(f"✅ EAR updated and saved as: {output_ear}")
 
 
-# Usage example
+# Usage Example
 if __name__ == "__main__":
-    input_ear = "myapp.ear"
-    output_ear = "myapp_updated.ear"
     update_ear_webxml(
-        ear_path=input_ear,
+        ear_path="myapp.ear",
         target_servlet="portal",
         param_name="applicationRoot",
         new_value="/prodlib/GEBCUMY3/appdata",
-        output_ear=output_ear
+        output_ear="myapp_updated.ear"
     )
