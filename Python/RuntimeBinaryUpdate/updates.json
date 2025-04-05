@@ -1,0 +1,13 @@
+[
+    {
+      "servlet_name": "portal",
+      "param_name": "applicationRoot",
+      "new_value": "/prodlib/GEBCUMY3/appdata"
+    },
+    {
+      "servlet_name": "auth",
+      "param_name": "loginURL",
+      "new_value": "/auth/login"
+    }
+  ]
+  
