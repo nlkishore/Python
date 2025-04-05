@@ -10,6 +10,9 @@ def update_web_xml(web_xml_path, target_servlet, param_name, new_param_value):
     namespace = root.tag[root.tag.find("{")+1 : root.tag.find("}")]
     ns = {'ns': namespace}
 
+    # Register the namespace as the default (no prefix)
+    ET.register_namespace('', namespace)  # This is key to preserving default xmlns
+
     # Use the namespace in XPath
     for servlet in root.findall('ns:servlet', ns):
         name = servlet.find('ns:servlet-name', ns)
