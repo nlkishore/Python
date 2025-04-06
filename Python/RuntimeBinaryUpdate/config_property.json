@@ -1,0 +1,20 @@
+{
+    "comment_keys": ["db.password", "old.api.token"],
+    "add_properties": [
+      {
+        "key": "new.api.key",
+        "value": "XYZ123",
+        "before": "db.username"
+      },
+      {
+        "key": "timeout",
+        "value": "30",
+        "position": "start"
+      },
+      {
+        "key": "app.env",
+        "value": "prod"
+      }
+    ]
+  }
+  
