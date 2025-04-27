@@ -1,0 +1,283 @@
+You have a requirement to scan all types of files (code, config, text, etc.) and report sensitive keywords like "password", "secret", "token", "apiKey", etc.
+You want to configure Sonar rules so that developers get alerts inside Eclipse and IntelliJ IDEs during development.
+
+1. Understand the limitation first:
+SonarQube / SonarLint normally only scans supported file types (Java, XML, YAML, JSON, etc.).
+
+If you want truly all file types (including .txt, .md, .properties, .ini, or custom formats), Sonar doesn't automatically scan them unless configured carefully.
+
+IDE plugin = SonarLint (which syncs rules from SonarQube server or has its own local ruleset).
+
+2. High-level solution approach:
+
+Step	What to do?	Tools
+1	Create a custom rule to detect sensitive keywords inside text	SonarQube Custom Rule
+2	Extend Sonar Java Plugin or use Generic Issue Import if you want even free-text files checked	Sonar Custom Plugin
+3	Configure SonarLint to bind to your SonarQube server (if needed)	SonarLint IDE Plugin
+4	Developers will see violations inside Eclipse/IntelliJ	IDE
+3. How to Configure It:
+a) Create a Custom Rule to detect sensitive keywords
+You can define a Regex-based Rule in SonarQube.
+
+Example:
+In SonarQube, you can add a Custom XPath Rule for XML, or a Regex Rule for text-like files (properties, JSON).
+
+If you are coding a Java-based rule (more powerful), you can catch patterns like:
+
+if (line.contains("password") || line.contains("secret") || line.contains("apiKey")) {
+    reportIssue("Sensitive keyword found: " + line);
+}
+
+
+Or use Regex:
+
+.*(password|secret|token|api[_-]?key).*[:= ].*
+
+
+b) Configure SonarQube for Text and Unknown files
+Sonar has Generic Sensor APIs to scan non-code files.
+
+✅ You can write a simple Sensor to:
+
+Open all text files.
+
+Apply regex scanning.
+
+Report issues with the keyword found.
+
+
+Example approach:
+
+Scan .properties, .conf, .json, .yml, .txt.
+
+Even .md if needed.
+
+c) Setup SonarLint for IDEs
+In Eclipse and IntelliJ:
+
+Install the SonarLint plugin.
+
+Connect it to your SonarQube server ("Bind Project to SonarQube").
+
+SonarLint will now pull your custom rules (including your new sensitive word rule).
+
+Violations will start showing as warnings/errors in the IDE itself.
+
+4. Example Architecture Diagram
+Would you like me to quickly sketch a diagram showing this flow? 🚀
+(SonarQube Server → Custom Plugin → SonarLint → IDE Integration)
+
+5. Bonus Tip
+If you want a zero custom code approach, you can:
+
+Use Sonar Generic Issue Import: Write a small external script that scans all files and generates a sonar-report.json.
+
+Sonar will pick up the issues during analysis.
+
+Less "smart" but quicker to set up.
+
+6. Keywords list
+You should maintain a sensitive-words.txt (easy to update) like:
+
+password
+passwd
+pwd
+secret
+apiKey
+apikey
+token
+authorization
+accessKey
+privateKey
+
+
+Summary Steps
+
+#	Action	Tool
+1	Write a Custom Sonar Rule	Java plugin or Regex in SonarQube
+2	Make sure text files are scanned	Generic Sensor or external script
+3	Install & Bind SonarLint in IDEs	Eclipse / IntelliJ
+4	See warnings inside IDE	Developer friendly
+
+1. Example: Custom Sonar Rule using Java (for keywords detection)
+Suppose you are scanning Java source files for sensitive keywords (password, secret, etc.)
+
+🔹 Custom Java Rule Example:
+
+package com.mycompany.rules;
+
+import org.sonar.check.Rule;
+import org.sonar.plugins.java.api.tree.LiteralTree;
+import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.plugins.java.api.IssuableSubscriptionVisitor;
+
+import java.util.Arrays;
+import java.util.List;
+
+@Rule(key = "SensitiveKeywordRule")
+public class SensitiveKeywordRule extends IssuableSubscriptionVisitor {
+
+    private static final List<String> SENSITIVE_KEYWORDS = Arrays.asList(
+            "password", "secret", "apiKey", "token", "authKey"
+    );
+
+    @Override
+    public List<Tree.Kind> nodesToVisit() {
+        return Arrays.asList(Tree.Kind.STRING_LITERAL);
+    }
+
+    @Override
+    public void visitNode(Tree tree) {
+        LiteralTree literalTree = (LiteralTree) tree;
+        String value = literalTree.value().toLowerCase();
+
+        for (String keyword : SENSITIVE_KEYWORDS) {
+            if (value.contains(keyword)) {
+                reportIssue(tree, "Sensitive keyword detected: '" + keyword + "'");
+                break;
+            }
+        }
+    }
+}
+
+package com.mycompany.rules;
+
+import org.sonar.check.Rule;
+import org.sonar.plugins.java.api.tree.LiteralTree;
+import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.plugins.java.api.IssuableSubscriptionVisitor;
+
+import java.util.Arrays;
+import java.util.List;
+
+@Rule(key = "SensitiveKeywordRule")
+public class SensitiveKeywordRule extends IssuableSubscriptionVisitor {
+
+    private static final List<String> SENSITIVE_KEYWORDS = Arrays.asList(
+            "password", "secret", "apiKey", "token", "authKey"
+    );
+
+    @Override
+    public List<Tree.Kind> nodesToVisit() {
+        return Arrays.asList(Tree.Kind.STRING_LITERAL);
+    }
+
+    @Override
+    public void visitNode(Tree tree) {
+        LiteralTree literalTree = (LiteralTree) tree;
+        String value = literalTree.value().toLowerCase();
+
+        for (String keyword : SENSITIVE_KEYWORDS) {
+            if (value.contains(keyword)) {
+                reportIssue(tree, "Sensitive keyword detected: '" + keyword + "'");
+                break;
+            }
+        }
+    }
+}
+Deploy this as part of a Sonar Java Plugin.
+
+
+2. Example: Regex based Rule in SonarQube (no coding)
+If you don't want to code plugins —
+You can create a Simple Text/Regex Rule in SonarQube using "Generic Pattern Detector".
+
+🔹 Regex Example for properties, YAML, JSON, etc:
+
+
+
+.*(password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key).*[:= ].*
+
+ This regex will match lines containing sensitive keys.
+
+Use it:
+
+In SonarQube go to Quality Profiles ➔ Create a Regex Rule.
+
+Apply it to languages like .properties, .yml, .json.
+
+3. Example: Scan All File Types (Generic Issue Reporting)
+When you want Sonar to scan ANY file, you can use Generic Issue Import.
+
+🔹 Idea:
+
+You write a small scanner script (Python / Shell / Java).
+
+It finds sensitive words.
+
+It outputs a generic-issues.json file.
+
+Sample JSON output:
+
+[
+  {
+    "engineId": "SensitiveKeywordScanner",
+    "ruleId": "SensitiveKeyword",
+    "primaryLocation": {
+      "message": "Sensitive keyword 'password' detected",
+      "filePath": "src/main/resources/config.properties",
+      "textRange": {
+        "startLine": 10,
+        "endLine": 10
+      }
+    },
+    "type": "VULNERABILITY",
+    "severity": "CRITICAL"
+  }
+]
+
+SonarQube reads this file during analysis with:
+
+
+-Dsonar.externalIssuesReportPaths=path/to/generic-issues.json
+
+Small Python script to scan .txt, .md, .properties, .yml, etc.
+
+Generate this report format.
+
+
+4. Example: SonarLint Setup in Eclipse/IntelliJ
+Once you have custom rules:
+
+Install SonarLint Plugin in Eclipse or IntelliJ IDEA.
+
+Bind your project to SonarQube server:
+
+Settings → Tools → SonarLint → Connected Mode.
+
+Pull down the custom rules.
+
+SonarLint will highlight problems live in your editor!
+
+ Result:
+When you type something like:
+String apiKey = "123456"; 
+
+
+5. Example: Sensitive Keywords File (Externalized)
+Instead of hard-coding, keep keywords in a text file like sensitive-words.txt:
+
+password
+passwd
+pwd
+secret
+token
+apiKey
+accessKey
+authorization
+authKey
+
+List<String> keywords = Files.readAllLines(Paths.get("sensitive-words.txt"));
+
+
+Quick Summary Table
+
+Scenario	Example
+Custom Java Rule	Java class with string literal scanning
+Regex Rule	SonarQube Regex detecting sensitive words
+Scan All File Types	Python script ➔ generic-issues.json import
+SonarLint in IDE	Bind IDE to Sonar server, show warnings in Eclipse/IntelliJ
+Keywords Management	External sensitive-words.txt
+
+
+
