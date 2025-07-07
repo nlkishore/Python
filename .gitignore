@@ -1,0 +1,18 @@
+
+# Added by create_gitignore.py
+# Python virtual environments
+.venv/
+venv/
+# Node.js dependencies
+node_modules/
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+# IDE and OS clutter
+.vscode/
+.idea/
+.DS_Store
+# Logs and temp files
+*.log
+tmp/
