@@ -14,6 +14,7 @@ end_date = "2023-12-31"
 #data = yf.download(symbols, start=start_date, end=end_date)['Adj Close']
 data = yf.download(symbols, start=start_date, end=end_date, auto_adjust=True)
 
+
 # Drop rows with missing values
 data = data.dropna()
 
