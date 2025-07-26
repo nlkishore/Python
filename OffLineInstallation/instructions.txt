@@ -1,0 +1,4 @@
+Offline installation of packages for  Log Parsing and analysis
+-> requirement.txt
+-> pip download -r requirement.txt -d offline_packages
+
