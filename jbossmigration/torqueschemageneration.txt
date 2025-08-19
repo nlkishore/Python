@@ -1,0 +1,118 @@
+torque-schema-gen/
+├── build.xml
+├── build.properties
+├── lib/
+│   └── ojdbc8.jar
+└── torque-gen/
+
+build.xml
+<project name="TorqueSchemaGen" default="generate-schema" basedir=".">
+  <property file="build.properties"/>
+
+  <taskdef name="torque-jdbc"
+           classname="org.apache.torque.task.TorqueJDBCTransformTask"
+           classpath="lib/ojdbc8.jar"/>
+
+  <target name="generate-schema">
+    <torque-jdbc
+      outputDirectory="torque-gen"
+      targetPackage="${torque.schema.targetPackage}"
+      databaseDriver="${torque.database.driver}"
+      databaseUrl="${torque.database.url}"
+      databaseUser="${torque.database.user}"
+      databasePassword="${torque.database.password}" />
+  </target>
+</project>
+
+build.properties
+# Oracle DB connection
+torque.database.url=jdbc:oracle:thin:@//<HOST>:<PORT>/<SERVICE>
+torque.database.driver=oracle.jdbc.OracleDriver
+torque.database.user=your_db_user
+torque.database.password=your_db_password
+
+# Output settings
+torque.schema.targetPackage=schema
+
+lib/ojdbc8.jar
+
+ant generate-schema
+
+Java class Generation:
+
+torque-schema-gen/
+├── build.xml
+├── build.properties
+├── lib/
+│   ├── ojdbc8.jar
+│   └── torque-5.x JARs (listed below)
+├── torque-gen/
+│   └── schema.xml (generated)
+└── src-gen/
+    └── (Java classes will be generated here)
+In lib folder 
+- torque-generator.jar
+- torque-templates.jar
+- torque-engine.jar
+- velocity-engine-core.jar
+- commons-configuration2.jar
+- commons-lang3.jar
+- commons-logging.jar
+
+
+build.properties
+# Oracle DB connection
+torque.database.url=jdbc:oracle:thin:@//<HOST>:<PORT>/<SERVICE>
+torque.database.driver=oracle.jdbc.OracleDriver
+torque.database.user=your_db_user
+torque.database.password=your_db_password
+
+# Output settings
+torque.schema.targetPackage=schema
+torque.schema.outputDirectory=torque-gen
+
+# Java generation settings
+torque.java.outputDirectory=src-gen
+torque.java.targetPackage=com.uob.generated
+
+
+Updated build.xml
+<project name="TorqueSchemaGen" default="generate-all" basedir=".">
+  <property file="build.properties"/>
+
+  <path id="torque.classpath">
+    <fileset dir="lib">
+      <include name="**/*.jar"/>
+    </fileset>
+  </path>
+
+  <taskdef name="torque-jdbc"
+           classname="org.apache.torque.task.TorqueJDBCTransformTask"
+           classpathref="torque.classpath"/>
+
+  <taskdef name="torque-java"
+           classname="org.apache.torque.task.TorqueDataModelTask"
+           classpathref="torque.classpath"/>
+
+  <target name="generate-schema">
+    <torque-jdbc
+      outputDirectory="${torque.schema.outputDirectory}"
+      targetPackage="${torque.schema.targetPackage}"
+      databaseDriver="${torque.database.driver}"
+      databaseUrl="${torque.database.url}"
+      databaseUser="${torque.database.user}"
+      databasePassword="${torque.database.password}" />
+  </target>
+
+  <target name="generate-java" depends="generate-schema">
+    <torque-java
+      controlTemplate="templates/sql/base/Control.vm"
+      outputDirectory="${torque.java.outputDirectory}"
+      targetPackage="${torque.java.targetPackage}"
+      schemaFile="${torque.schema.outputDirectory}/schema.xml" />
+  </target>
+
+  <target name="generate-all" depends="generate-java"/>
+</project>
+
+ant generate-all
