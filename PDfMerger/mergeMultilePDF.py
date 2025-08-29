@@ -19,4 +19,4 @@ pdf_files = [
     
 ]
 
-merge_pdfs(pdf_files, "C:/Kishore-Resume/combinedResume.pdf")
+merge_pdfs(pdf_files, "combinedRsume.pdf")
