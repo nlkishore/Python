@@ -192,3 +192,223 @@ classify_and_extract(import_map, system_prefixes, third_party_prefixes, output_d
 ---
 
 Would you like to add a column that flags deprecated JDK APIs or shows which Jakarta imports need refactoring? I can also help you generate a migration checklist from this CSV.
+
+
+
+Awesome, Laxmi. Here's how we extend your Python workflow to generate a detailed **CSV report** that not only lists imports per class, but also flags:
+
+- ✅ Whether the class uses **deprecated JDK APIs**
+- ✅ Whether it contains **`javax.*` imports** that need migration to `jakarta.*`
+- ✅ Whether it's safe to migrate independently
+
+---
+
+## 🐍 Enhanced CSV Report Generator
+
+Add this to your existing script (or integrate into `classify_and_extract`):
+
+```python
+import csv
+
+def generate_detailed_csv(import_map, system_prefixes, third_party_prefixes, csv_path):
+    deprecated_apis = ["sun.misc.", "Thread.stop", "Thread.suspend", "Thread.resume"]
+    javax_prefix = "javax."
+
+    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            "File Path", "Import Count", "Classification",
+            "Uses javax.*", "Uses Deprecated API", "Imports"
+        ])
+
+        for file_path, imports in import_map.items():
+            uses_javax = any(javax_prefix in imp for imp in imports)
+            uses_deprecated = any(any(dep in imp for dep in deprecated_apis) for imp in imports)
+            is_system_or_third_party = any(
+                imp.startswith(f"import {prefix}") for imp in imports for prefix in system_prefixes + third_party_prefixes
+            )
+
+            classification = "System/3rd-Party" if is_system_or_third_party else "App-Specific"
+            writer.writerow([
+                file_path, len(imports), classification,
+                "Yes" if uses_javax else "No",
+                "Yes" if uses_deprecated else "No",
+                "; ".join(imports)
+            ])
+
+    print(f"📊 Detailed CSV report generated: {csv_path}")
+```
+
+---
+
+## 🧠 Sample Output
+
+| File Path                  | Import Count | Classification     | Uses javax.* | Uses Deprecated API | Imports                                      |
+|---------------------------|--------------|---------------------|--------------|----------------------|----------------------------------------------|
+| `/merged/BaseDAO.java`    | 5            | System/3rd-Party    | Yes          | No                   | import javax.sql.DataSource; ...             |
+| `/merged/LegacyThread.java` | 3          | System/3rd-Party    | No           | Yes                  | import sun.misc.Unsafe; import Thread.stop;  |
+| `/merged/UserService.java` | 4           | App-Specific        | No           | No                   | import com.wipro.banking.model.User; ...     |
+
+---
+
+## 🔧 Next Steps
+
+- You can sort or filter this CSV to isolate `javax.*` classes for Jakarta migration.
+- Use the deprecated API flag to prioritize refactoring.
+- Combine this with your Maven build to compile only flagged classes against JDK 17.
+
+Would you like a version that also outputs a summary report—like total `javax.*` classes, deprecated usage count, and safe-to-migrate modules?
+
+Yes, Laxmi—there are smart ways to identify classes that are **generated stubs** from tools like **JAXB** or **Turbine ORM**, especially when you're trying to isolate them during a migration. Here's how you can approach it programmatically and structurally:
+
+---
+
+## 🧬 How to Identify Generated Classes
+
+### 1. 🔖 **Look for Tool-Specific Annotations or Patterns**
+
+#### ✅ JAXB-generated classes often include:
+- `@XmlRootElement`, `@XmlType`, `@XmlAccessorType`, `@XmlElement`
+- Package-level annotations in `package-info.java`
+- Naming conventions like `ObjectFactory.java`, `JAXBElement`, or schema-derived class names
+
+#### ✅ Turbine/Torque-generated classes typically:
+- Extend `BaseXxx` or `XxxPeer` classes
+- Live in `om` or `peer` packages (e.g., `com.wipro.banking.om.User`)
+- Include static `doInsert`, `doUpdate`, `doSelect` methods
+- Are regenerated from `.schema` or `.xml` files via Torque generator
+
+---
+
+### 2. 🐍 Python Script to Flag Generated Classes
+
+You can scan for these patterns using a script like this:
+
+```python
+import os
+
+def is_generated_stub(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+        return (
+            "@XmlRootElement" in content or
+            "@XmlType" in content or
+            "ObjectFactory" in file_path or
+            "Base" in os.path.basename(file_path) or
+            "Peer" in os.path.basename(file_path) or
+            "doInsert" in content or
+            "doSelect" in content
+        )
+
+def find_generated_classes(source_dir):
+    generated = []
+    for root, _, files in os.walk(source_dir):
+        for file in files:
+            if file.endswith(".java"):
+                path = os.path.join(root, file)
+                if is_generated_stub(path):
+                    generated.append(path)
+    return generated
+
+# Example usage
+generated_classes = find_generated_classes("/path/to/merged-src")
+print("🧬 Likely generated classes:")
+for cls in generated_classes:
+    print(cls)
+```
+
+---
+
+### 3. 🧠 Best Practices for Migration
+
+- Move these classes to a dedicated `generated-src` module.
+- Avoid modifying them directly—extend or wrap them in your own abstractions.
+- Regenerate them using updated tools (e.g., JAXB XJC for JDK 17, Torque 5.x if needed).
+- Document their origin and regeneration process for reproducibility.
+
+---
+
+Would you like a version of the script that also tags each class with its generator type (JAXB vs Torque) and outputs a CSV report for audit?
+
+
+
+
+Absolutely, Laxmi. Here's a refined version of your audit script that:
+
+✅ Scans all `.java` files  
+✅ Extracts import statements  
+✅ Detects whether each class is likely generated by **JAXB** or **Torque**  
+✅ Outputs a detailed **CSV report** with generator type tagging
+
+---
+
+## 🧠 Detection Heuristics
+
+| Generator | Detection Criteria |
+|----------|--------------------|
+| **JAXB** | Presence of `@XmlRootElement`, `@XmlType`, `ObjectFactory`, or `javax.xml.bind.*` imports |
+| **Torque** | Class name contains `Base`, `Peer`, or methods like `doInsert`, `doSelect`, or imports from `org.apache.torque.*` |
+
+---
+
+## 🐍 Python Script: Generator-Aware CSV Audit
+
+```python
+import os
+import csv
+
+def detect_generator(file_path, imports, content):
+    if any(ann in content for ann in ["@XmlRootElement", "@XmlType", "ObjectFactory"]) or \
+       any("javax.xml.bind" in imp for imp in imports):
+        return "JAXB"
+    elif any(term in file_path for term in ["Base", "Peer"]) or \
+         any(method in content for method in ["doInsert", "doSelect"]) or \
+         any("org.apache.torque" in imp for imp in imports):
+        return "Torque"
+    return "Manual/Unknown"
+
+def extract_imports_and_tag(source_dir, csv_path):
+    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            "File Path", "Import Count", "Generator Type", "Imports"
+        ])
+
+        for root, _, files in os.walk(source_dir):
+            for file in files:
+                if file.endswith(".java"):
+                    path = os.path.join(root, file)
+                    with open(path, 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                        content = ''.join(lines)
+                        imports = [line.strip() for line in lines if line.strip().startswith("import ")]
+
+                    generator = detect_generator(path, imports, content)
+                    writer.writerow([path, len(imports), generator, "; ".join(imports)])
+
+    print(f"📊 Generator-tagged CSV report created: {csv_path}")
+```
+
+---
+
+## 🧪 Example Usage
+
+```python
+source_dir = "/projects/merged-src"
+csv_report = "/projects/generator-audit.csv"
+extract_imports_and_tag(source_dir, csv_report)
+```
+
+---
+
+## 📊 Sample Output
+
+| File Path                  | Import Count | Generator Type | Imports                                      |
+|---------------------------|--------------|----------------|----------------------------------------------|
+| `/merged/UserPeer.java`   | 6            | Torque         | import org.apache.torque.util.Criteria; ...  |
+| `/merged/ObjectFactory.java` | 4         | JAXB           | import javax.xml.bind.annotation.XmlType; ...|
+| `/merged/CustomService.java` | 3         | Manual/Unknown | import com.wipro.banking.model.User; ...     |
+
+---
+
+Would you like to extend this to also move tagged files into separate folders like `/jaxb-src` and `/torque-src` for modular builds? I can help scaffold that too.
