@@ -1,0 +1,37 @@
+{
+    "bitbucket": {
+        "url": "https://your-bitbucket-server.com",
+        "username": "YOUR_USERNAME",
+        "password": "YOUR_PASSWORD_OR_TOKEN",
+        "project": "PROJECT_KEY",
+        "repo": "REPO_SLUG"
+    },
+    "countries": [
+        {
+            "name": "India",
+            "pairs": [
+                {
+                    "source": "hotfix/in/v1.0",
+                    "target": "develop-in"
+                },
+                {
+                    "source": "feature/in/new-ui",
+                    "target": "develop-in"
+                }
+            ]
+        },
+        {
+            "name": "Singapore",
+            "pairs": [
+                {
+                    "source": "hotfix/sg/v2.1",
+                    "target": "develop-sg"
+                }
+            ]
+        }
+    ],
+    "report": {
+        "output_dir": "C:/Python/Bitbucket/reports",
+        "filename": "branch_integrity_report.csv"
+    }
+}
