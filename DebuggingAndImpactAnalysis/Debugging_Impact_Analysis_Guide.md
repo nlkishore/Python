@@ -75,6 +75,8 @@ SELECT * FROM TRANSACTIONS AS OF TIMESTAMP TO_TIMESTAMP('2024-02-05 10:00:00', '
 MINUS
 SELECT * FROM TRANSACTIONS;
 ```
+> [!NOTE]
+> **Permissions Required**: This method requires the user to have the `FLASHBACK` privilege on the specific table or the `FLASHBACK ANY TABLE` system privilege. It does **not** strictly require DBA/Admin rights, but standard users often lack this by default. Also, the DB must have Automatic Undo Management enabled with sufficient retention.
 
 ## 4. Derive End-to-End Flow
 
