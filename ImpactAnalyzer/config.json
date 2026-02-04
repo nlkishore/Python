@@ -1,0 +1,25 @@
+{
+    "server": {
+        "host": "unix-prod-01.bank.internal",
+        "user": "jboss",
+        "password": "your_ssh_password_here",
+        "ssh_key_path": "",
+        "log_path": "/app/jboss/standalone/log/server.log",
+        "log_date_format": "%Y-%m-%d %H:%M:%S"
+    },
+    "database": {
+        "dsn": "db-host:1521/service_name",
+        "user": "app_user",
+        "password": "secure_password_or_env_var",
+        "critical_tables": [
+            "ACCOUNTS",
+            "TRANSACTIONS",
+            "AUDIT_LOG"
+        ]
+    },
+    "browser": {
+        "enabled": true,
+        "debug_port": 9222
+    },
+    "output_dir": "C:/Python/ImpactAnalyzer/reports"
+}

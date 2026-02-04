@@ -1,0 +1,4 @@
+paramiko
+oracledb
+websocket-client
+requests
