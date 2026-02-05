@@ -169,3 +169,24 @@ You must start the browser with special flags.
     *   Linux: `~/.config/google-chrome/chrome_debug.log`
 
 **Warning**: This captures *internal* browser debug info, which is very noisy. For application debugging, the **Selenium (Section 5)** approach is superior as it captures only the JS Console output.
+
+## 7. Automated Impact Analysis Tool (`ImpactAnalyzer`)
+
+We have built a custom Python tool (`C:\Python\ImpactAnalyzer`) to automate the collection of all the above artifacts (Logs, DB Changes, Browser Console).
+
+**Features:**
+*   **Multi-Market Support**: Works for SG, MY, TH, etc.
+*   **Multi-App Support**: Customer vs Bank Admin.
+*   **Unified Report**: Generates a ZIP file containing Server Logs, DB Report, and Browser Logs.
+
+**Usage**:
+
+1.  **Configure**: Update `config.json` with your credentials/hosts.
+2.  **Run**:
+    ```powershell
+    # Syntax: python main.py --market <MARKET> --app <APP_TYPE> --duration <MINUTES>
+    
+    # Example: Debug SG Customer App for 10 minutes
+    python main.py --market SG --app customer --duration 10
+    ```
+3.  **Result**: A consolidated report will be generated in `reports/`.
