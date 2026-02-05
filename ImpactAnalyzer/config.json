@@ -1,25 +1,64 @@
 {
-    "server": {
-        "host": "unix-prod-01.bank.internal",
-        "user": "jboss",
-        "password": "your_ssh_password_here",
-        "ssh_key_path": "",
-        "log_path": "/app/jboss/standalone/log/server.log",
-        "log_date_format": "%Y-%m-%d %H:%M:%S"
+    "global_defaults": {
+        "ssh_key_path": "C:/Users/nlaxm/.ssh/id_rsa",
+        "output_dir": "reports",
+        "browser": {
+            "enabled": true,
+            "debug_port": 9222
+        }
     },
-    "database": {
-        "dsn": "db-host:1521/service_name",
-        "user": "app_user",
-        "password": "secure_password_or_env_var",
-        "critical_tables": [
-            "ACCOUNTS",
-            "TRANSACTIONS",
-            "AUDIT_LOG"
-        ]
-    },
-    "browser": {
-        "enabled": true,
-        "debug_port": 9222
-    },
-    "output_dir": "C:/Python/ImpactAnalyzer/reports"
+    "markets": {
+        "SG": {
+            "customer": {
+                "server": {
+                    "host": "sg-cust-01.bank.internal",
+                    "user": "jboss",
+                    "password": "sg_cust_password",
+                    "log_path": "/app/jboss/standalone/log/server.log"
+                },
+                "database": {
+                    "dsn": "sg-db:1521/cust_srv",
+                    "user": "app_sg",
+                    "password": "sg_db_password",
+                    "critical_tables": [
+                        "ACCOUNTS",
+                        "TRANSACTIONS"
+                    ]
+                }
+            },
+            "admin": {
+                "server": {
+                    "host": "sg-admin-01.bank.internal",
+                    "user": "boss",
+                    "password": "sg_admin_password",
+                    "log_path": "/app/boss/log/server.log"
+                },
+                "database": {
+                    "dsn": "sg-db:1521/admin_srv",
+                    "user": "adm_sg",
+                    "password": "sg_adm_password"
+                }
+            }
+        },
+        "MY": {
+            "customer": {
+                "server": {
+                    "host": "my-cust-01.bank.internal",
+                    "user": "jboss",
+                    "password": "my_cust_password",
+                    "log_path": "/app/jboss/standalone/log/server.log"
+                },
+                "database": {
+                    "dsn": "my-db:1521/cust_srv",
+                    "user": "app_my",
+                    "password": "my_db_password"
+                }
+            }
+        },
+        "TH": {},
+        "ID": {},
+        "OV": {},
+        "HK": {},
+        "CN": {}
+    }
 }

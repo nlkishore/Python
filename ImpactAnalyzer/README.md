@@ -53,12 +53,17 @@ Oracle DB connection requires a password (or Wallet).
 1.  **Start your Test Preparation** (Open the banking app in Chrome with debugging enabled).
     *   *Note*: Start Chrome with: `chrome.exe --remote-debugging-port=9222`
 2.  **Run the Analyzer**:
+    Select the **Market** (e.g., SG, MY) and **App Type** (customer, admin).
+    
     ```powershell
-    # Run for 15 minutes
-    python main.py --duration 15
+    # Run for 15 minutes for SG Customer App
+    python main.py --market SG --app customer --duration 15
+    
+    # Run for MY Bank Admin App
+    python main.py --market MY --app admin --duration 10
     ```
-3.  **Perform Test**: Do your manual testing in the next 15 minutes.
-4.  **Result**: A zip file (e.g., `reports/analysis_20260205_1000.zip`) will be created containing all logs.
+3.  **Perform Test**: Do your manual testing in the next X minutes.
+4.  **Result**: A zip file (e.g., `reports/analysis_SG_customer_20260205.zip`) will be created.
 
 ---
 
