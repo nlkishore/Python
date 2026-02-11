@@ -1,0 +1,68 @@
+
+    <html>
+    <head>
+        <title>Bitbucket Branch Audit Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .risk { color: red; font-weight: bold; }
+            .safe { color: green; }
+        </style>
+    </head>
+    <body>
+        <h1>Bitbucket Branch Audit Report</h1>
+        <p>Generated at: 2026-02-12 07:33:00</p>
+        <p>Purpose: Identify missing merges from Main Release Branch to CR Branches (Production Risk Check).</p>
+        
+        <table>
+            <tr>
+                <th>Country/Project</th>
+                <th>Repo</th>
+                <th>Source (Main)</th>
+                <th>Target (CR)</th>
+                <th>Status</th>
+                <th>Missing Commits (Delta)</th>
+            </tr>
+    
+            <tr>
+                <td>Country-B (BANK_SG)</td>
+                <td>payment-gateway</td>
+                <td>refs/heads/release/branch-A</td>
+                <td>refs/heads/release/branch-B</td>
+                <td><span class='risk'>MISSING 2 COMMITS</span></td>
+                <td><ul><li>abc1234: Fix NullPointerException in Payment (Dev A)</li><li>def5678: Update security lib version (Dev B)</li></ul></td>
+            </tr>
+        
+            <tr>
+                <td>Country-B (BANK_SG)</td>
+                <td>payment-gateway</td>
+                <td>refs/heads/release/branch-A</td>
+                <td>refs/heads/release/branch-C</td>
+                <td><span class='safe'>SYNCED</span></td>
+                <td>None. Target includes all Source changes.</td>
+            </tr>
+        
+            <tr>
+                <td>Country-B (BANK_SG)</td>
+                <td>customer-service</td>
+                <td>refs/heads/release/main-v1</td>
+                <td>refs/heads/release/cr-1234</td>
+                <td><span class='safe'>SYNCED</span></td>
+                <td>None. Target includes all Source changes.</td>
+            </tr>
+        
+            <tr>
+                <td>Country-B (BANK_SG)</td>
+                <td>customer-service</td>
+                <td>refs/heads/release/main-v1</td>
+                <td>refs/heads/release/cr-5678</td>
+                <td><span class='safe'>SYNCED</span></td>
+                <td>None. Target includes all Source changes.</td>
+            </tr>
+        
+        </table>
+    </body>
+    </html>
+    

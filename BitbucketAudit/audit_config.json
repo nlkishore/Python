@@ -1,0 +1,22 @@
+[
+    {
+        "country": "Country-B",
+        "project": "BANK_SG",
+        "repository": "payment-gateway",
+        "source_branch": "refs/heads/release/branch-A",
+        "target_branches": [
+            "refs/heads/release/branch-B",
+            "refs/heads/release/branch-C"
+        ]
+    },
+    {
+        "country": "Country-B",
+        "project": "BANK_SG",
+        "repository": "customer-service",
+        "source_branch": "refs/heads/release/main-v1",
+        "target_branches": [
+            "refs/heads/release/cr-1234",
+            "refs/heads/release/cr-5678"
+        ]
+    }
+]
