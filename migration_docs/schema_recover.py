@@ -78,7 +78,19 @@ def parse_peer_and_object(peer_path, obj_path):
                     if 'ID' in col['name']:
                         col['primaryKey'] = 'true'
 
-    return {'name': table_name, 'columns': columns}
+    # 3. Parse MapBuilder for ID Method (if exists)
+    map_builder_path = peer_path.replace("Peer.java", "MapBuilder.java")
+    if os.path.exists(map_builder_path):
+        with open(map_builder_path, 'r', encoding='utf-8', errors='ignore') as f:
+            mb_content = f.read()
+            if 'setPrimaryKeyMethod(TableMap.ID_BROKER)' in mb_content or '"idbroker"' in mb_content:
+                columns[0]['idMethod'] = 'idbroker' # Mark on first column/table
+            elif 'setPrimaryKeyMethod(TableMap.NATIVE)' in mb_content or '"native"' in mb_content:
+                columns[0]['idMethod'] = 'native'
+            elif 'setPrimaryKeyMethod(TableMap.NONE)' in mb_content or '"none"' in mb_content:
+                columns[0]['idMethod'] = 'none'
+
+    return {'name': table_name, 'columns': columns, 'idMethod': columns[0].get('idMethod', 'native')}
 
 def map_java_to_sql(java_type):
     mapping = {
@@ -105,6 +117,10 @@ def generate_xml(tables):
         tbl = ET.SubElement(root, "table")
         tbl.set("name", t_name)
         
+        # Set table-level idMethod if detected
+        if 'idMethod' in t_data and t_data['idMethod'] != 'native':
+             tbl.set("idMethod", t_data['idMethod'])
+
         for col in t_data['columns']:
             c = ET.SubElement(tbl, "column")
             c.set("name", col['name'])
@@ -112,6 +128,9 @@ def generate_xml(tables):
             if 'primaryKey' in col:
                 c.set("primaryKey", "true")
                 c.set("required", "true")
+                # Deprecated but sometimes useful:
+                if t_data.get('idMethod') == 'native' and col['type'] == 'INTEGER':
+                     c.set("autoIncrement", "true")
 
     # Pretty print
     xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")

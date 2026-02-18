@@ -14,6 +14,18 @@ When migrating from Torque 3 to 7, the `idMethod` configuration is critical.
 *   If `ID_TABLE` exists -> You were using IDBroker.
 *   **Recommendation**: Switch to Native Sequences if possible. It is much more performant.
 
+### How to Check ID Method from Legacy Stubs
+If you are unsure which ID method was used, check the generated `*MapBuilder.java` files (e.g., `AuthorMapBuilder.java`).
+
+1.  **Open `AuthorMapBuilder.java`**.
+2.  Search for `doBuild()` method.
+3.  Look for `tMap.setPrimaryKeyMethod(...)`.
+    *   `TableMap.ID_BROKER` -> **ID Broker** (Requires `ID_TABLE`).
+    *   `TableMap.NATIVE` -> **Native** (Sequence/AutoIncrement).
+    *   `TableMap.NONE` -> **None** (Manual ID assignment).
+
+**Updated Automation**: The provided `schema_recover.py` now attempts to parse this automatically.
+
 ## 2. Data Type Mapping (Java <-> SQL)
 Accurate mapping is essential to prevent `ClassCastException` or data truncation.
 
