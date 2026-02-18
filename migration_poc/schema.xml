@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+<!DOCTYPE database SYSTEM "http://db.apache.org/torque/DTD/database.dtd">
+<database name="bookstore" defaultIdMethod="native">
+  <table name="AUTHOR" description="Author Table">
+    <column name="AUTHOR_ID" required="true" primaryKey="true" type="INTEGER" description="Author Id"/>
+    <column name="NAME" required="true" type="VARCHAR" size="50" description="Author Name"/>
+  </table>
+
+  <table name="BOOK" description="Book Table">
+    <column name="BOOK_ID" required="true" primaryKey="true" type="INTEGER" description="Book Id"/>
+    <column name="ISBN" required="true" type="VARCHAR" size="15" description="ISBN"/>
+    <column name="AUTHOR_ID" required="true" type="INTEGER" description="Foreign Key Author"/>
+    <foreign-key foreignTable="AUTHOR">
+      <reference local="AUTHOR_ID" foreign="AUTHOR_ID"/>
+    </foreign-key>
+  </table>
+</database>
