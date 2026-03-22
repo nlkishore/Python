@@ -1,0 +1,23 @@
+# Local secrets — copy from config/settings.example.yaml
+config/settings.yaml
+config/*.local.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+.env
+*.egg-info/
+dist/
+build/
+
+# Workspaces & reports (optional: commit small samples only)
+workspaces/
+
+# IDE
+.idea/
+.vscode/
+*.iml

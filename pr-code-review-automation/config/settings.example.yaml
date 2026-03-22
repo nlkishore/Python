@@ -1,0 +1,96 @@
+# Copy to config/settings.yaml and fill secrets (settings.yaml is gitignored).
+# Environment variables: use ${VAR_NAME} — loaded from os.environ.
+
+bitbucket:
+  # Bitbucket Server / Data Center base URL (no trailing slash)
+  server_url: "https://bitbucket.company.example"
+  # HTTP access token (PAT) or app password — prefer ${BITBUCKET_TOKEN}
+  token: "${BITBUCKET_TOKEN}"
+  # Optional: username for Basic auth if your server requires it (PAT often uses x-token-auth)
+  username: "x-token-auth"
+  # Project key (e.g. MYPROJ)
+  project_key: "MYPROJ"
+  # Repository slug (URL slug, e.g. order-service)
+  repository_slug: "order-service"
+  # Numeric pull request ID
+  pull_request_id: 1
+  # REST API prefix (Server/Data Center)
+  api_path_prefix: "/rest/api/latest"
+  # SSL verification (false only for internal CAs if you know the risk)
+  verify_ssl: true
+
+repository:
+  # Optional override: full clone URL. If empty, built as:
+  # {server_url}/scm/{project_key}/{repository_slug}.git
+  clone_url_override: ""
+  # Git ref strategy: from | merge  (Bitbucket Server refs/pull-requests/ID/from|merge)
+  pr_ref_strategy: "from"
+
+paths:
+  # Git executable
+  git: "git"
+  # Maven (mvn or mvn.cmd on Windows)
+  maven: "mvn"
+  # Optional JAVA_HOME for subprocess env (empty = inherit)
+  java_home: ""
+  # Working directory root for clones (one folder per PR)
+  workspace_root: "C:/work/pr-review-workspaces"
+
+spotbugs:
+  # SpotBugs home (directory containing lib/) OR path to spotbugs.bat / spotbugs script
+  home: "C:/tools/spotbugs-4.8.3"
+  # FindSecBugs plugin jar (OWASP-oriented security patterns on bytecode) — optional
+  findsecbugs_plugin_jar: ""
+  # Enable running SpotBugs after successful compile
+  enabled: false
+
+semgrep:
+  executable: "semgrep"
+  # OWASP-related rulesets; add enterprise registry rules as needed
+  extra_args:
+    - "--config=p/java"
+    - "--config=p/owasp-top-ten"
+  enabled: false
+
+pmd:
+  # PMD CLI (pmd.bat or pmd) — NPE-style bugs, best practices
+  executable: "pmd"
+  # Ruleset path or built-in (e.g. category/java/errorprone.xml)
+  rulesets:
+    - "category/java/errorprone.xml"
+    - "category/java/security.xml"
+  enabled: false
+
+dependency_check:
+  # OWASP Dependency-Check script/sh (optional; slow on first run)
+  executable: ""
+  enabled: false
+
+sonarqube:
+  # SonarScanner CLI — aligns with server-side rules; complements IDE SonarLint
+  scanner_path: "sonar-scanner"
+  host_url: "${SONAR_HOST_URL}"
+  token: "${SONAR_TOKEN}"
+  # Optional project key for this repo on SonarQube
+  project_key: ""
+  enabled: false
+
+ide:
+  # Paths to IDE binaries (optional). SonarLint runs inside the IDE — use these to launch review manually.
+  intellij_path: "C:/Program Files/JetBrains/IntelliJ IDEA 2024.1/bin/idea64.exe"
+  eclipse_path: "C:/eclipse/eclipse.exe"
+  # If true, print suggested CLI to open workspace in IDE after run
+  print_open_hints: true
+
+pipeline:
+  # Run Maven compile
+  maven_compile: true
+  maven_compile_args: ["-q", "-DskipTests", "compile"]
+  # Timeout seconds for Maven
+  maven_timeout_sec: 3600
+  # Timeout for analyzers
+  analyzer_timeout_sec: 1800
+
+reports:
+  # Subdirectory under workspace for outputs
+  output_subdir: "pr-review-reports"

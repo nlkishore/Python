@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>PR {{ summary.bitbucket.pull_request_id }} — Code review run</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 1.5rem; }
+    h1 { font-size: 1.25rem; }
+    table { border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.35rem 0.6rem; text-align: left; }
+    th { background: #f4f4f4; }
+    .ok { color: #0a0; }
+    .fail { color: #c00; }
+    pre { background: #f8f8f8; padding: 0.75rem; overflow: auto; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <h1>Pull request review summary</h1>
+  <p><strong>Repository:</strong> {{ summary.bitbucket.project_key }} / {{ summary.bitbucket.repository_slug }}
+     — <strong>PR #{{ summary.bitbucket.pull_request_id }}</strong></p>
+  {% if summary.pull_request %}
+  <p><strong>Branch:</strong> {{ summary.pull_request.from_branch }} → {{ summary.pull_request.to_branch }}</p>
+  <p><strong>Commits:</strong> <code>{{ summary.pull_request.from_commit[:12] }}</code> (from)</p>
+  {% endif %}
+  <p><strong>Workspace:</strong> <code>{{ summary.workspace }}</code></p>
+
+  <h2>Steps</h2>
+  <table>
+    <tr><th>Step</th><th>Status</th><th>Details</th></tr>
+    {% if summary.steps.diff %}
+    <tr>
+      <td>Diff / merge-base</td>
+      <td class="{{ 'ok' if summary.steps.diff.ok else 'fail' }}">{{ summary.steps.diff.ok }}</td>
+      <td>{{ summary.steps.diff.merge_base or summary.steps.diff.error or '' }}</td>
+    </tr>
+    {% endif %}
+    {% if summary.steps.changed_lines_report %}
+    <tr>
+      <td>Changed lines JSON</td>
+      <td class="ok">ok</td>
+      <td><code>{{ summary.steps.changed_lines_report }}</code></td>
+    </tr>
+    {% endif %}
+    {% if summary.steps.maven_compile %}
+    <tr>
+      <td>Maven compile</td>
+      <td class="{{ 'ok' if summary.steps.maven_compile.ok else 'fail' }}">{{ summary.steps.maven_compile.ok }}</td>
+      <td><code>{{ summary.steps.maven_compile.report }}</code></td>
+    </tr>
+    {% endif %}
+    {% if summary.steps.analyzers is iterable and summary.steps.analyzers is not string %}
+    {% for a in summary.steps.analyzers %}
+    <tr>
+      <td>{{ a.name }}</td>
+      <td class="{{ 'ok' if a.ok else 'fail' }}">{{ a.ok }}</td>
+      <td>exit {{ a.exit_code }}</td>
+    </tr>
+    {% endfor %}
+    {% endif %}
+  </table>
+
+  <p><small>Started {{ summary.started_at }} — Finished {{ summary.finished_at }}</small></p>
+</body>
+</html>
