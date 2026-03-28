@@ -1,0 +1,20 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.TorqueTurbineModernization
+displayName: Misys Torque/Turbine modernization starter
+description: >
+  Starter placeholder for framework-specific rewrites that are not fully covered by built-in recipes.
+  Keep safe deterministic changes only; add markers for semantic/manual migrations.
+recipeList:
+  # Example deterministic import migration (replace with your exact FQNs)
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.torque.util.Criteria
+      newFullyQualifiedTypeName: org.apache.torque.criteria.Criteria
+
+  # Example package rename placeholder; adjust only after validating exact mappings
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: org.apache.turbine.services
+      newPackageName: org.apache.turbine.services
+      recursive: true
+
+  # Keep baseline formatting after custom transforms
+  - org.openrewrite.java.RemoveUnusedImports

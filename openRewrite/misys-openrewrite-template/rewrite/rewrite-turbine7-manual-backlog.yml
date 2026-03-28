@@ -1,0 +1,44 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.Turbine3To7ManualBacklog
+displayName: Detect legacy Turbine 3.x usages for manual Turbine 7.x migration backlog
+description: >
+  Detection-only recipe. Finds legacy Turbine APIs likely to need manual migration
+  (pipeline/valve/service redesign) and exports datatables for backlog generation.
+recipeList:
+  # Service manager / service lookup patterns
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.services.TurbineServices
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.services.Service
+      matchInherited: true
+
+  # Legacy module/action/screen patterns
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Action
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Screen
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Navigation
+      matchInherited: true
+
+  # Legacy request/runtime context patterns
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.util.RunData
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.util.TemplateInfo
+      matchInherited: true
+
+  # Service areas commonly refactored in Turbine 7-era modernization
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.services.localization.LocalizationService
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.services.security.TurbineSecurityService
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.services.schedule.JobEntry
+      matchInherited: true

@@ -1,0 +1,8 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.Baseline
+displayName: Misys baseline modernization
+description: Shared safe baseline recipes for all portal components.
+recipeList:
+  - org.openrewrite.java.RemoveUnusedImports
+  - org.openrewrite.java.OrderImports
+  - org.openrewrite.java.format.AutoFormat
