@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./ConfigReader"
+    ],
+    "python.analysis.typeCheckingMode": "basic"
+}

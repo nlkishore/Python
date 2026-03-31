@@ -1,0 +1,92 @@
+# Spring Framework 4.x → 6.x + Jakarta EE 9+ alignment
+# Requires rewrite-maven-plugin classpath: rewrite-migrate-java + rewrite-spring (see pom.xml).
+# Docs: OPENREWRITE-SPRING4-TO-6-RECIPE-AND-CONSTRAINTS.md
+#
+# Usage:
+#   mvn -U org.openrewrite.maven:rewrite-maven-plugin:run -DactiveRecipes=com.uob.openrewrite.SpringFramework4xTo6xJakarta
+#   mvn -U org.openrewrite.maven:rewrite-maven-plugin:run -DactiveRecipes=com.uob.openrewrite.SpringFramework4xTo6xWithSpringSecurity6
+#   mvn -U org.openrewrite.maven:rewrite-maven-plugin:run -DactiveRecipes=com.uob.openrewrite.SpringFramework4To6ManualBacklog
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.SpringFramework4xTo6xJakarta
+displayName: Spring Framework 4.x/5.x → 6.0 + Jakarta namespaces (application code)
+description: >
+  Runs OpenRewrite's UpgradeSpringFramework_6_0 (chains 5.2→5.3→6.0 dependency and API fixes per rewrite-spring),
+  then applies JavaxToJakartaNamespaces for javax.* → jakarta.* in your sources. Requires JDK 17+ for Spring 6.
+  Does not replace all manual steps (see constraints doc): XML config, Spring Security major upgrade, removed integrations.
+tags:
+  - spring
+  - jakarta
+  - migration
+recipeList:
+  - org.openrewrite.java.spring.framework.UpgradeSpringFramework_6_0
+  - com.uob.openrewrite.JavaxToJakartaNamespaces
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.SpringFramework4xTo6xWithSpringSecurity6
+displayName: Spring Framework → 6.0 + Jakarta + Spring Security 6.0
+description: >
+  Same as SpringFramework4xTo6xJakarta plus org.openrewrite.java.spring.security6.UpgradeSpringSecurity_6_0.
+  Use when the project uses Spring Security; review breaking changes and OAuth2 config separately.
+tags:
+  - spring
+  - spring-security
+  - jakarta
+recipeList:
+  - org.openrewrite.java.spring.framework.UpgradeSpringFramework_6_0
+  - org.openrewrite.java.spring.security6.UpgradeSpringSecurity_6_0
+  - com.uob.openrewrite.JavaxToJakartaNamespaces
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.SpringFramework4To6ManualBacklog
+displayName: Spring 4.x→6.x — detection for manual migration backlog
+description: >
+  Search-only markers for APIs and integrations commonly removed or reworked between Spring 4 era and Spring 6.
+  Export datatables from rewrite-maven-plugin for ticket backlogs. Not exhaustive—pair with compiler errors and Spring wiki.
+tags:
+  - spring
+  - backlog
+  - detection
+recipeList:
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.jdbc.core.simple.SimpleJdbcTemplate
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.web.multipart.commons.CommonsMultipartResolver
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.orm.hibernate3.support.HibernateDaoSupport
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.orm.hibernate4.support.HibernateDaoSupport
+      matchInherited: true
+  - org.openrewrite.text.Find:
+      find: "jee:"
+      filePattern: "**/*.xml"
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.servlet.http.HttpServletRequest
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.servlet.http.HttpServletResponse
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.persistence.Entity
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.validation.Valid
+      matchInherited: true
+  - org.openrewrite.text.Find:
+      find: "http://www.springframework.org/schema/"
+      filePattern: "**/*.xml"
+  - org.openrewrite.text.Find:
+      find: "javax.servlet"
+      filePattern: "**/*.xml"
+  - org.openrewrite.text.Find:
+      find: "javax.servlet"
+      filePattern: "**/*.jsp"

@@ -1,0 +1,98 @@
+# Apache Torque 3.x → 7.x OpenRewrite recipes (web application migration)
+# Reference: TORQUE-3-TO-7-UPGRADE-SUMMARY.md, OPENREWRITE-TORQUE3-TO-7-RECIPE-AND-CONSTRAINTS.md
+#
+# Usage examples (Maven, from project with rewrite.yml including these recipes):
+#   mvn -U org.openrewrite.maven:rewrite-maven-plugin:run -DactiveRecipes=com.uob.openrewrite.Torque3To7ManualBacklog
+#   mvn -U org.openrewrite.maven:rewrite-maven-plugin:run -DactiveRecipes=com.uob.openrewrite.Torque3To7WithJakartaWebTier
+#   mvn -U org.openrewrite.maven:rewrite-maven-plugin:run -DactiveRecipes=com.uob.openrewrite.Torque3To7OptionalNewCriteriaPackage
+#
+# Requires: rewrite-migrate-java on plugin classpath for JavaxToJakarta (via JavaxToJakartaNamespaces).
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Torque3To7WithJakartaWebTier
+displayName: Torque-era web app — Jakarta namespaces (servlet/JSP tier)
+description: >
+  For WARs that mix Torque with javax.* servlets/JSP: delegates to JavaxToJakartaNamespaces.
+  Does not change Torque ORM semantics or generated peers. Use with Torque3To7ManualBacklog and
+  manual generator/schema work per Apache "Migration from Torque 3".
+tags:
+  - torque
+  - jakarta
+  - web
+recipeList:
+  - com.uob.openrewrite.JavaxToJakartaNamespaces
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Torque3To7OptionalNewCriteriaPackage
+displayName: "OPTIONAL RISKY: org.apache.torque.util.Criteria → org.apache.torque.criteria.Criteria"
+description: >
+  Performs a mechanical ChangeType from deprecated util.Criteria to criteria.Criteria.
+  Apache documents different semantics (OR methods, string args, CUSTOM operator, doDelete).
+  Run only after review; expect compile errors and failing tests until logic is adjusted.
+tags:
+  - torque
+  - risky
+  - criteria
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.torque.util.Criteria
+      newFullyQualifiedTypeName: org.apache.torque.criteria.Criteria
+  - org.openrewrite.java.RemoveUnusedImports
+  - org.openrewrite.java.format.AutoFormat
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Torque3To7ManualBacklog
+displayName: Torque 3.x → 7.x — detection for manual migration backlog
+description: >
+  Search-only: Torque 3 APIs, Village, MapBuilder, and markers for Criteria.CUSTOM / null-connection
+  patterns. Export datatables from rewrite-maven-plugin for backlog tracking.
+tags:
+  - torque
+  - backlog
+  - detection
+recipeList:
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.Criteria
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.criteria.Criteria
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.BasePeer
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.VillageUtils
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.map.MapBuilder
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.Torque
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.Transaction
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.Record
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.Value
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.QueryDataSet
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.DataSet
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.Column
+      matchInherited: true
+  - org.openrewrite.text.Find:
+      find: com.workingdogs.village
+      filePattern: "**/*.java"
+  - org.openrewrite.text.Find:
+      find: Criteria.CUSTOM
+      filePattern: "**/*.java"

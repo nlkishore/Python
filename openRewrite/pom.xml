@@ -1,0 +1,128 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>openrewrite-jakarta-migration</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>openrewrite-jakarta-migration</name>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <rewrite.version>5.42.0</rewrite.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>2.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-input-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <target>
+                                <!-- EDIT these two paths -->
+                                <property name="src.input.dir" value="C:/path/to/legacy/src/main/java"/>
+                                <property name="src.output.dir" value="${project.build.directory}/generated-sources/migrated"/>
+
+                                <mkdir dir="${src.output.dir}"/>
+                                <copy todir="${src.output.dir}" overwrite="true">
+                                    <fileset dir="${src.input.dir}" includes="**/*.java"/>
+                                </copy>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-migrated-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/migrated</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.openrewrite.maven</groupId>
+                <artifactId>rewrite-maven-plugin</artifactId>
+                <version>${rewrite.version}</version>
+                <configuration>
+                    <!-- Default: Jakarta-only. For Turbine 4→7 Java migration use: com.uob.openrewrite.Turbine4To7WebCompatible -->
+                    <activeRecipes>
+                        <recipe>com.uob.openrewrite.JavaxToJakartaNamespaces</recipe>
+                    </activeRecipes>
+                    <exportDatatables>true</exportDatatables>
+                    <!-- Turbine: rewrite-turbine4-to-7-webapp.yml, OPENREWRITE-TURBINE4-TO-7-RECIPE-AND-CONSTRAINTS.md -->
+                    <!-- Torque: rewrite-torque3-to-7-webapp.yml, OPENREWRITE-TORQUE3-TO-7-RECIPE-AND-CONSTRAINTS.md -->
+                    <!-- Spring: rewrite-spring-4-to-6-jakarta.yml, OPENREWRITE-SPRING4-TO-6-RECIPE-AND-CONSTRAINTS.md -->
+                    <configLocation>${project.basedir}/rewrite.yml</configLocation>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.openrewrite.recipe</groupId>
+                        <artifactId>rewrite-migrate-java</artifactId>
+                        <version>2.26.0</version>
+                    </dependency>
+                    <!-- Spring Framework 4.x→6.x recipes (Jakarta-aligned); align version with https://github.com/openrewrite/rewrite-spring/releases -->
+                    <dependency>
+                        <groupId>org.openrewrite.recipe</groupId>
+                        <artifactId>rewrite-spring</artifactId>
+                        <version>5.19.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

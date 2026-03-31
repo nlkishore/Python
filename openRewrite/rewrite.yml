@@ -1,0 +1,307 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.JavaxToJakartaNamespaces
+displayName: Migrate javax namespaces to jakarta (selected enterprise APIs)
+description: >
+  Composite recipe to migrate common Java EE/Jakarta namespaces from javax.* to jakarta.*,
+  focused on servlet, JMS, transactions, JAXB and related APIs.
+tags:
+  - jakarta
+  - javaee
+  - migration
+recipeList:
+  # Broad built-in migration coverage
+  - org.openrewrite.java.migrate.jakarta.JavaxMigrationToJakarta
+
+  # Explicit package migrations (kept for clarity and targeted reruns)
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.servlet
+      newPackageName: jakarta.servlet
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.jms
+      newPackageName: jakarta.jms
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.transaction
+      newPackageName: jakarta.transaction
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.xml.bind
+      newPackageName: jakarta.xml.bind
+      recursive: true
+
+  # Common companion APIs frequently seen in legacy projects
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.annotation
+      newPackageName: jakarta.annotation
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.ws.rs
+      newPackageName: jakarta.ws.rs
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.persistence
+      newPackageName: jakarta.persistence
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.validation
+      newPackageName: jakarta.validation
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.activation
+      newPackageName: jakarta.activation
+      recursive: true
+
+---
+# Turbine 4.x → 7.x (see rewrite-turbine4-to-7-webapp.yml for the same recipes, kept in sync)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Turbine4To7WebCompatible
+displayName: Turbine 4.x → 7.x web compatibility (Java + Jakarta)
+description: >
+  Automates deterministic refactors for Turbine 7: Jakarta namespaces, TemplateInfo alignment,
+  cleanup. Manual steps documented in OPENREWRITE-TURBINE4-TO-7-RECIPE-AND-CONSTRAINTS.md.
+tags:
+  - turbine
+  - jakarta
+  - migration
+recipeList:
+  - org.openrewrite.java.migrate.jakarta.JavaxMigrationToJakarta
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.servlet
+      newPackageName: jakarta.servlet
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.jms
+      newPackageName: jakarta.jms
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.transaction
+      newPackageName: jakarta.transaction
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.xml.bind
+      newPackageName: jakarta.xml.bind
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.annotation
+      newPackageName: jakarta.annotation
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.ws.rs
+      newPackageName: jakarta.ws.rs
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.persistence
+      newPackageName: jakarta.persistence
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.validation
+      newPackageName: jakarta.validation
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.activation
+      newPackageName: jakarta.activation
+      recursive: true
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.util.TemplateInfo
+      newFullyQualifiedTypeName: org.apache.turbine.util.template.TemplateInfo
+  - org.openrewrite.java.RemoveUnusedImports
+  - org.openrewrite.java.format.AutoFormat
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Turbine4To7ManualBacklog
+displayName: Turbine 4.x → 7.x — detection for manual migration backlog
+description: >
+  Search-only recipe for Turbine touchpoints needing manual review (AbstractValve, Turbine subclass, services, createRuntimeDirectories).
+tags:
+  - turbine
+  - backlog
+  - detection
+recipeList:
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.pipeline.AbstractValve
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.Turbine
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.services.TurbineServices
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Action
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Screen
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Navigation
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.util.RunData
+      matchInherited: true
+  - org.openrewrite.text.Find:
+      find: createRuntimeDirectories
+      filePattern: "**/*.java"
+
+---
+# Torque 3.x → 7.x (see rewrite-torque3-to-7-webapp.yml — keep in sync)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Torque3To7WithJakartaWebTier
+displayName: Torque-era web app — Jakarta namespaces (servlet/JSP tier)
+description: >
+  Delegates to JavaxToJakartaNamespaces for WARs mixing Torque with javax.* web APIs.
+  Does not change Torque ORM semantics. See OPENREWRITE-TORQUE3-TO-7-RECIPE-AND-CONSTRAINTS.md.
+tags:
+  - torque
+  - jakarta
+  - web
+recipeList:
+  - com.uob.openrewrite.JavaxToJakartaNamespaces
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Torque3To7OptionalNewCriteriaPackage
+displayName: "OPTIONAL RISKY: util.Criteria → criteria.Criteria"
+description: >
+  Mechanical ChangeType; Apache documents semantic differences. Opt-in only with tests.
+tags:
+  - torque
+  - risky
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.torque.util.Criteria
+      newFullyQualifiedTypeName: org.apache.torque.criteria.Criteria
+  - org.openrewrite.java.RemoveUnusedImports
+  - org.openrewrite.java.format.AutoFormat
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Torque3To7ManualBacklog
+displayName: Torque 3.x → 7.x — detection for manual migration backlog
+description: >
+  Search-only for Torque 3 APIs, Village, MapBuilder, Criteria.CUSTOM markers.
+tags:
+  - torque
+  - backlog
+recipeList:
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.Criteria
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.criteria.Criteria
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.BasePeer
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.VillageUtils
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.map.MapBuilder
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.Torque
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.Transaction
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.Record
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.Value
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.QueryDataSet
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.DataSet
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.Column
+      matchInherited: true
+  - org.openrewrite.text.Find:
+      find: com.workingdogs.village
+      filePattern: "**/*.java"
+  - org.openrewrite.text.Find:
+      find: Criteria.CUSTOM
+      filePattern: "**/*.java"
+
+---
+# Spring Framework 4.x/5.x → 6.x + Jakarta (see rewrite-spring-4-to-6-jakarta.yml — keep in sync)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.SpringFramework4xTo6xJakarta
+displayName: Spring Framework 4.x/5.x → 6.0 + Jakarta namespaces
+description: >
+  UpgradeSpringFramework_6_0 then JavaxToJakartaNamespaces. JDK 17+ required for Spring 6.
+tags:
+  - spring
+  - jakarta
+recipeList:
+  - org.openrewrite.java.spring.framework.UpgradeSpringFramework_6_0
+  - com.uob.openrewrite.JavaxToJakartaNamespaces
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.SpringFramework4xTo6xWithSpringSecurity6
+displayName: Spring Framework → 6.0 + Jakarta + Spring Security 6.0
+description: >
+  Framework 6 + Spring Security 6 + Jakarta namespaces.
+tags:
+  - spring
+  - spring-security
+recipeList:
+  - org.openrewrite.java.spring.framework.UpgradeSpringFramework_6_0
+  - org.openrewrite.java.spring.security6.UpgradeSpringSecurity_6_0
+  - com.uob.openrewrite.JavaxToJakartaNamespaces
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.SpringFramework4To6ManualBacklog
+displayName: Spring 4.x→6.x — detection for manual migration backlog
+description: >
+  Search-only for legacy Spring MVC/JDBC/Hibernate3-4 and javax.* / XML patterns.
+tags:
+  - spring
+  - backlog
+recipeList:
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.jdbc.core.simple.SimpleJdbcTemplate
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.web.multipart.commons.CommonsMultipartResolver
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.orm.hibernate3.support.HibernateDaoSupport
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.orm.hibernate4.support.HibernateDaoSupport
+      matchInherited: true
+  - org.openrewrite.text.Find:
+      find: "jee:"
+      filePattern: "**/*.xml"
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.servlet.http.HttpServletRequest
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.servlet.http.HttpServletResponse
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.persistence.Entity
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.validation.Valid
+      matchInherited: true
+  - org.openrewrite.text.Find:
+      find: "http://www.springframework.org/schema/"
+      filePattern: "**/*.xml"
+  - org.openrewrite.text.Find:
+      find: "javax.servlet"
+      filePattern: "**/*.xml"
+  - org.openrewrite.text.Find:
+      find: "javax.servlet"
+      filePattern: "**/*.jsp"

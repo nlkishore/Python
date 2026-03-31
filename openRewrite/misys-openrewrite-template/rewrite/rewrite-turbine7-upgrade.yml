@@ -1,0 +1,27 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.Turbine3To7PackageUpgrade
+displayName: Turbine 3.x to 7.x package/type upgrade (confirmed-safe set)
+description: >
+  Production-safe Turbine modernization set using only deterministic mappings.
+  Non-deterministic service/pipeline/API migrations must be handled via manual backlog profile.
+  Mapping confirmation reference:
+  rewrite/TURBINE3-TO-7-VERIFIED-MAPPING-TABLE.md
+recipeList:
+  # --- Confirmed-safe namespace modernization ---
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.util.TemplateInfo
+      newFullyQualifiedTypeName: org.apache.turbine.util.template.TemplateInfo
+
+  # Jakarta namespace migration used by Turbine web modules on modern runtimes
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.servlet
+      newPackageName: jakarta.servlet
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.servlet.http
+      newPackageName: jakarta.servlet.http
+      recursive: true
+
+  # Keep result clean
+  - org.openrewrite.java.RemoveUnusedImports
+  - org.openrewrite.java.format.AutoFormat

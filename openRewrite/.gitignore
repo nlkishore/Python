@@ -1,0 +1,23 @@
+# Maven
+target/
+**/target/
+
+# IDE
+.idea/
+*.iml
+.settings/
+.classpath
+.project
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Editor
+.cursor/
+
+# Office lock files
+~$*

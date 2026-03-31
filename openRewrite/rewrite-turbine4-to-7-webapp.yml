@@ -1,0 +1,114 @@
+# Apache Turbine 4.x → 7.x OpenRewrite recipes (Java web application)
+# Reference: TURBINE-4-TO-7-UPGRADE-SUMMARY.md and OPENREWRITE-TURBINE4-TO-7-RECIPE-AND-CONSTRAINTS.md
+#
+# Usage (Maven): mvn -U org.openrewrite.maven:rewrite-maven-plugin:run -DactiveRecipes=com.uob.openrewrite.Turbine4To7WebCompatible
+# Detection only:  -DactiveRecipes=com.uob.openrewrite.Turbine4To7ManualBacklog
+#
+# Requires rewrite-migrate-java on the plugin classpath (see parent pom.xml).
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Turbine4To7WebCompatible
+displayName: Turbine 4.x → 7.x web compatibility (Java + Jakarta)
+description: >
+  Automates the parts of a Turbine 4.x → 7.x upgrade that are safe to express as
+  deterministic refactors: Jakarta EE 9+ namespace migration, Turbine TemplateInfo
+  import alignment, and cleanup. Does NOT replace manual steps for custom valves,
+  Turbine subclasses, XML config merge, logging, or dependency upgrades—see
+  OPENREWRITE-TURBINE4-TO-7-RECIPE-AND-CONSTRAINTS.md.
+tags:
+  - turbine
+  - jakarta
+  - migration
+recipeList:
+  # --- Jakarta EE 8 → 9+ (required for Turbine 7 / Servlet 5+) ---
+  - org.openrewrite.java.migrate.jakarta.JavaxMigrationToJakarta
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.servlet
+      newPackageName: jakarta.servlet
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.jms
+      newPackageName: jakarta.jms
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.transaction
+      newPackageName: jakarta.transaction
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.xml.bind
+      newPackageName: jakarta.xml.bind
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.annotation
+      newPackageName: jakarta.annotation
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.ws.rs
+      newPackageName: jakarta.ws.rs
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.persistence
+      newPackageName: jakarta.persistence
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.validation
+      newPackageName: jakarta.validation
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.activation
+      newPackageName: jakarta.activation
+      recursive: true
+
+  # Legacy import path still seen in some Turbine 3.x / mixed codebases (no-op if absent)
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.util.TemplateInfo
+      newFullyQualifiedTypeName: org.apache.turbine.util.template.TemplateInfo
+
+  - org.openrewrite.java.RemoveUnusedImports
+  - org.openrewrite.java.format.AutoFormat
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.uob.openrewrite.Turbine4To7ManualBacklog
+displayName: Turbine 4.x → 7.x — detection for manual migration backlog
+description: >
+  Search-only recipe: finds Turbine pipeline, servlet, and framework touchpoints that
+  typically need human review after a Turbine 7 upgrade (AbstractValve removal,
+  custom Turbine bootstrap, modules, services). Pair with datatable export for backlog CSVs.
+tags:
+  - turbine
+  - backlog
+  - detection
+recipeList:
+  # Pipeline: AbstractValve removed in Turbine 7 — must become "implements Valve" + Jakarta types (manual)
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.pipeline.AbstractValve
+      matchInherited: true
+
+  # Custom servlet entry points
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.Turbine
+      matchInherited: true
+
+  # Core Turbine integration surfaces (often need API review on major upgrades)
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.services.TurbineServices
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Action
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Screen
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Navigation
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.util.RunData
+      matchInherited: true
+
+  # Text hits for removed bootstrap API (manual refactor to configureApplication / Path)
+  - org.openrewrite.text.Find:
+      find: createRuntimeDirectories
+      filePattern: "**/*.java"

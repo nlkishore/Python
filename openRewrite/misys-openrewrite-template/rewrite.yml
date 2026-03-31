@@ -1,0 +1,9 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.AllModernization
+displayName: Misys full modernization composite
+description: Composite entrypoint when you need all rewrite sets in one run.
+recipeList:
+  - com.misys.rewrite.Baseline
+  - com.misys.rewrite.Java17Upgrade
+  - com.misys.rewrite.JavaxToJakarta
+  - com.misys.rewrite.TorqueTurbineModernization

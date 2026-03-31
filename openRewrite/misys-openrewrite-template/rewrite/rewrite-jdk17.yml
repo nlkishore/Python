@@ -1,0 +1,8 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.Java17Upgrade
+displayName: Misys Java 17 upgrade
+description: Apply common Java/JVM modernization recipes for Java 17 adoption.
+recipeList:
+  - org.openrewrite.java.migrate.UpgradeToJava17
+  - org.openrewrite.java.migrate.util.UseModernizedJavaUtilApi
+  - org.openrewrite.java.cleanup.SimplifyBooleanExpression
