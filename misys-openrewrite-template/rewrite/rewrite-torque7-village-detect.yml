@@ -1,0 +1,40 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.DetectTorque3AndVillageReferences
+displayName: Detect Torque 3.x + Village usage (manual remediation backlog)
+description: >
+  Detection-only recipe to generate file lists/datatables for source files that reference
+  Torque 3.x classes and Village component classes. Use output to plan manual migration
+  toward Torque 7.x-compatible patterns.
+recipeList:
+  # Torque 3.x usage detection (starter)
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.Criteria
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.BasePeer
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.map.MapBuilder
+      matchInherited: true
+
+  # Village component detection (adjust FQNs based on your exact legacy stack)
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.Record
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.Value
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.QueryDataSet
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.DataSet
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.Column
+      matchInherited: true
+
+  # Generic package-level detection fallback for village namespace
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.workingdogs.village.*
+      matchInherited: true

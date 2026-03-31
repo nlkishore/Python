@@ -1,0 +1,33 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.Torque3ToTorque7
+displayName: Detect Torque 3 usage and migrate toward Torque 7 (starter)
+description: >
+  Composite recipe that (1) identifies files referencing Torque 3 Criteria/MapBuilder and (2) applies
+  safe deterministic type changes toward Torque 7-era APIs where mappings are known.
+  For non-deterministic MapBuilder equivalents, keep this as "report/marker first" until verified.
+recipeList:
+  #
+  # A) Detection / reporting recipes (file list)
+  # These generate datatables when run with rewrite-maven-plugin exportDatatables=true.
+  #
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.Criteria
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.util.BasePeer
+      matchInherited: true
+  # TODO: Replace with the exact Torque 3 MapBuilder FQN used in your project:
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.torque.map.MapBuilder
+      matchInherited: true
+
+  #
+  # B) Deterministic migrations (safe starter)
+  #
+  # Criteria package change (verify exact old/new FQNs for Torque 3->7 in your codebase)
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.torque.util.Criteria
+      newFullyQualifiedTypeName: org.apache.torque.criteria.Criteria
+
+  # Keep code clean after transforms
+  - org.openrewrite.java.RemoveUnusedImports
