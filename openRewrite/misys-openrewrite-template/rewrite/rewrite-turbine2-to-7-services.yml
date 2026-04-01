@@ -1,0 +1,112 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.Turbine2To7ServiceAndControllerUpgrade
+displayName: Turbine 2.x to Turbine 7.x service/controller/parser/fulcrum-security upgrade starter
+description: >
+  Starter migration recipe for legacy Turbine 2.x style code.
+  Covers deterministic service-name rewrites in web.xml / Java string lookups,
+  controller superclass upgrades, parser API package upgrades, and Fulcrum Security type migration.
+  Use together with manual backlog detection for non-deterministic flow/service lifecycle changes.
+recipeList:
+  - com.misys.rewrite.Turbine2To7WebXmlServiceMigration
+  - com.misys.rewrite.Turbine2To7ControllerParserSecurityTypeMigration
+  - com.misys.rewrite.Turbine2To7ControllerParserSecurityBacklog
+  - org.openrewrite.java.RemoveUnusedImports
+  - org.openrewrite.java.format.AutoFormat
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.Turbine2To7WebXmlServiceMigration
+displayName: Turbine 2.x web.xml service key migration
+description: >
+  Rewrites common legacy Turbine service identifiers in web.xml and properties-style files.
+recipeList:
+  # Typical Turbine service aliases found in legacy web.xml / conf.
+  - org.openrewrite.text.FindAndReplace:
+      find: TurbineSecurityService
+      replace: SecurityService
+      regex: false
+      filePattern: "**/{web.xml,*.properties,*.conf,*.ini}"
+  - org.openrewrite.text.FindAndReplace:
+      find: ParserService
+      replace: ParameterParserService
+      regex: false
+      filePattern: "**/{web.xml,*.properties,*.conf,*.ini}"
+  - org.openrewrite.text.FindAndReplace:
+      find: template.service
+      replace: template.engine.service
+      regex: false
+      filePattern: "**/{web.xml,*.properties,*.conf,*.ini}"
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.Turbine2To7ControllerParserSecurityTypeMigration
+displayName: Turbine 2.x Java type migration for controller/parser/security
+description: >
+  Deterministic Java type/package moves commonly required during Turbine 2.x to 7.x upgrades.
+  Validate behavior after rewrite because lifecycle hooks and service wiring may differ by project.
+recipeList:
+  # Controller modernization
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.modules.Action
+      newFullyQualifiedTypeName: org.apache.turbine.modules.actions.VelocityAction
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.modules.Screen
+      newFullyQualifiedTypeName: org.apache.turbine.modules.screens.VelocityScreen
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.modules.Navigation
+      newFullyQualifiedTypeName: org.apache.turbine.modules.navigations.VelocityNavigation
+
+  # Parser service/API modernization
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.util.parser.Parser
+      newFullyQualifiedTypeName: org.apache.fulcrum.parser.ParameterParser
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.util.parser.BaseValueParser
+      newFullyQualifiedTypeName: org.apache.fulcrum.parser.BaseValueParser
+
+  # Fulcrum Security migration
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.services.security.TurbineSecurityService
+      newFullyQualifiedTypeName: org.apache.fulcrum.security.SecurityService
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.apache.turbine.om.security.User
+      newFullyQualifiedTypeName: org.apache.fulcrum.security.entity.User
+
+  # Legacy service lookup string updates in Java sources
+  - org.openrewrite.text.FindAndReplace:
+      find: "\"TurbineSecurityService\""
+      replace: "\"SecurityService\""
+      regex: false
+      filePattern: "**/*.java"
+  - org.openrewrite.text.FindAndReplace:
+      find: "\"ParserService\""
+      replace: "\"ParameterParserService\""
+      regex: false
+      filePattern: "**/*.java"
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.misys.rewrite.Turbine2To7ControllerParserSecurityBacklog
+displayName: Detect non-deterministic controller/parser/security migration hotspots
+description: >
+  Detection recipe to build manual backlog for lifecycle/service changes that need human validation.
+recipeList:
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Action
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Screen
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.modules.Navigation
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.util.parser.Parser
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.apache.turbine.services.security.TurbineSecurityService
+      matchInherited: true
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: "org.apache.turbine.services.TurbineServices getService(..)"
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: "org.apache.turbine.modules.Action doPerform(..)"

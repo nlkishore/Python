@@ -7,3 +7,4 @@ recipeList:
   - com.misys.rewrite.Java17Upgrade
   - com.misys.rewrite.JavaxToJakarta
   - com.misys.rewrite.TorqueTurbineModernization
+  - com.misys.rewrite.Turbine2To7ServiceAndControllerUpgrade

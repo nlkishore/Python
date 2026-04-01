@@ -202,5 +202,23 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>rewrite-turbine2-to-7-services-only</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.openrewrite.maven</groupId>
+                        <artifactId>rewrite-maven-plugin</artifactId>
+                        <configuration>
+                            <configLocation>${maven.multiModuleProjectDirectory}/rewrite/rewrite-turbine2-to-7-services.yml</configLocation>
+                            <activeRecipes>
+                                <recipe>com.misys.rewrite.Turbine2To7ServiceAndControllerUpgrade</recipe>
+                            </activeRecipes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>

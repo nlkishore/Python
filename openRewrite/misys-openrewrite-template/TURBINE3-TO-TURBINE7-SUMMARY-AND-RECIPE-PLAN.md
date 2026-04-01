@@ -54,6 +54,9 @@ This gives a controlled list of files needing manual migration.
   - starter deterministic mappings (candidate set; verify in your codebase)
 - `rewrite/rewrite-turbine7-manual-backlog.yml`
   - detection-only recipe for legacy Turbine APIs likely requiring manual redesign
+- `rewrite/rewrite-turbine2-to-7-services.yml`
+  - Turbine 2.x focused service/controller/parser/Fulcrum-security migration starter
+  - includes deterministic replacements plus backlog detection recipe
 
 ---
 
@@ -70,6 +73,17 @@ This gives a controlled list of files needing manual migration.
 4. Compile and validate:
    - `mvn compile`
 5. Manually remediate backlog items and re-run profiles.
+
+### Turbine 2.x focused run profile (added)
+
+Use this profile when migrating legacy Turbine 2.x style modules with service lookups and controller/parser code:
+
+1. Preview:
+   - `mvn -Prewrite-turbine2-to-7-services-only rewrite:dryRun`
+2. Apply:
+   - `mvn -Prewrite-turbine2-to-7-services-only rewrite:run`
+3. Compile:
+   - `mvn compile`
 
 ---
 
