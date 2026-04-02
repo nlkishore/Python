@@ -1,0 +1,405 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1rem 0; }
+.section-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 1.5rem 0 0.5rem;
+  padding-bottom: 4px;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+.stat {
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 12px;
+  text-align: center;
+}
+.stat-num { font-size: 28px; font-weight: 500; line-height: 1; margin-bottom: 4px; }
+.stat-label { font-size: 11px; color: var(--color-text-secondary); }
+.s-total .stat-num { color: var(--color-text-primary); }
+.s-used .stat-num { color: #0F6E56; }
+.s-override .stat-num { color: #185FA5; }
+.s-unused .stat-num { color: #888780; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.04em;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  white-space: nowrap;
+}
+td { padding: 7px 10px; vertical-align: top; border-bottom: 0.5px solid var(--color-border-tertiary); }
+tr:last-child td { border-bottom: none; }
+
+.layer-row td {
+  background: var(--color-background-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
+}
+
+.svc-name { font-weight: 500; color: var(--color-text-primary); font-size: 13px; white-space: nowrap; }
+.svc-sub  { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+.mono     { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-secondary); }
+.mono-hi  { font-family: var(--font-mono); font-size: 11px; color: #185FA5; }
+.mono-warn{ font-family: var(--font-mono); font-size: 11px; color: #854F0B; }
+
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.b-used    { background: #EAF3DE; color: #3B6D11; }
+.b-override{ background: #E6F1FB; color: #0C447C; }
+.b-pure    { background: #EEEDFE; color: #3C3489; }
+.b-unused  { background: #F1EFE8; color: #5F5E5A; }
+.b-break   { background: #FCEBEB; color: #791F1F; }
+.b-change  { background: #FAEEDA; color: #633806; }
+.b-same    { background: #EAF3DE; color: #3B6D11; }
+.b-new     { background: #E6F1FB; color: #0C447C; }
+.b-dep     { background: #FAEEDA; color: #633806; }
+.b-gone    { background: #FCEBEB; color: #791F1F; }
+.b-fulcrum { background: #EEEDFE; color: #3C3489; }
+
+.tag { display: flex; gap: 4px; flex-wrap: wrap; }
+td.center { text-align: center; }
+
+@media (prefers-color-scheme: dark) {
+  .b-used    { background: #173404; color: #C0DD97; }
+  .b-override{ background: #042C53; color: #B5D4F4; }
+  .b-pure    { background: #26215C; color: #CECBF6; }
+  .b-unused  { background: #2C2C2A; color: #D3D1C7; }
+  .b-break   { background: #501313; color: #F7C1C1; }
+  .b-change  { background: #412402; color: #FAC775; }
+  .b-same    { background: #173404; color: #C0DD97; }
+  .b-new     { background: #042C53; color: #B5D4F4; }
+  .b-dep     { background: #412402; color: #FAC775; }
+  .b-gone    { background: #501313; color: #F7C1C1; }
+  .b-fulcrum { background: #26215C; color: #CECBF6; }
+  .s-used .stat-num    { color: #5DCAA5; }
+  .s-override .stat-num{ color: #85B7EB; }
+  .mono-hi  { color: #85B7EB; }
+  .mono-warn{ color: #EF9F27; }
+}
+</style>
+
+<div class="wrap">
+
+<div class="stats">
+  <div class="stat s-total">
+    <div class="stat-num">28</div>
+    <div class="stat-label">Total Turbine 7 services</div>
+  </div>
+  <div class="stat s-used">
+    <div class="stat-num">18</div>
+    <div class="stat-label">Used by GEB</div>
+  </div>
+  <div class="stat s-override">
+    <div class="stat-num">10</div>
+    <div class="stat-label">Overridden by GTP</div>
+  </div>
+  <div class="stat s-unused">
+    <div class="stat-num">10</div>
+    <div class="stat-label">Not used in GEB</div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:18%">Service</th>
+      <th style="width:10%">GEB status</th>
+      <th style="width:20%">Turbine 2.3.3 class (GEB current)</th>
+      <th style="width:20%">GEB custom override</th>
+      <th style="width:9%">Turbine 7 status</th>
+      <th style="width:23%">Turbine 7 — what changed / alternative</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- LAYER 1 -->
+    <tr class="layer-row">
+      <td colspan="6">Layer 1 — apache standard services used as-is in GEB (Turbine internal backbone — mandatory)</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">FactoryService</div><div class="svc-sub">Object instantiation</div></td>
+      <td class="center"><span class="badge b-used">used</span></td>
+      <td><span class="mono">TurbineFactoryService</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">None — standard Apache</span></td>
+      <td class="center"><span class="badge b-fulcrum">Fulcrum</span></td>
+      <td>Moved to Fulcrum Factory. Available as Avalon component via <span class="mono-hi">AvalonComponentService</span></td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">PoolService</div><div class="svc-sub">Object pooling + recycling</div></td>
+      <td class="center"><span class="badge b-used">used</span></td>
+      <td><span class="mono">TurbinePoolService</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">None — but GTPSchedulerService implements InstanceListener</span></td>
+      <td class="center"><span class="badge b-break">breaking</span></td>
+      <td><span class="mono-warn">InstanceListener interface REMOVED</span> in Turbine 7. GTPSchedulerService implements it — compile error. Fulcrum Pool replaces TurbinePoolService.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">VelocityService</div><div class="svc-sub">Template rendering</div></td>
+      <td class="center"><span class="badge b-used">used</span></td>
+      <td><span class="mono">TurbineVelocityService</span><div class="svc-sub">Velocity 1.x</div></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">GlobalMacros.vm, TurbineMacros.vm</span></td>
+      <td class="center"><span class="badge b-change">changed</span></td>
+      <td>Velocity 1.x → 2.x upgrade. <span class="mono-warn">getContext(RunData)</span> → <span class="mono-hi">getContext(PipelineData)</span>. Macro syntax needs verification.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">TemplateService</div><div class="svc-sub">Template → Screen mapping</div></td>
+      <td class="center"><span class="badge b-used">used</span></td>
+      <td><span class="mono">TurbineTemplateService</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">None — but proven mandatory. Removing caused init() crash.</span></td>
+      <td class="center"><span class="badge b-change">changed</span></td>
+      <td><span class="mono-warn">getTemplate(RunData, String)</span> removed. Non-RunData methods unchanged. Same service name in Turbine 7.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">AssemblerBrokerService</div><div class="svc-sub">Loads Screens, Actions, Layouts</div></td>
+      <td class="center"><span class="badge b-used">used</span></td>
+      <td><span class="mono">TurbineAssemblerBrokerService</span></td>
+      <td><span class="mono-warn">GTPJavaScreenFactory</span><div class="svc-sub">injected as screen assembler</div></td>
+      <td class="center"><span class="badge b-break">breaking</span></td>
+      <td><span class="mono-warn">getAssembler(type, name, RunData)</span> overload REMOVED. GTPJavaScreenFactory uses Turbine internal reflection — must rebuild against Turbine 7 assembler model.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">PullService</div><div class="svc-sub">Tools injected into templates</div></td>
+      <td class="center"><span class="badge b-used">used</span></td>
+      <td><span class="mono">TurbinePullService</span></td>
+      <td><span class="mono-warn">GTPApplicationData</span><div class="svc-sub">$gtpapp in every .vm file</div></td>
+      <td class="center"><span class="badge b-break">breaking</span></td>
+      <td><span class="mono-warn">populateContext(Context, RunData)</span> → <span class="mono-hi">populateContext(Context, PipelineData)</span>. Every $gtpapp call in every .vm template is downstream of this change.</td>
+    </tr>
+
+    <!-- LAYER 2 -->
+    <tr class="layer-row">
+      <td colspan="6">Layer 2 — apache services overridden by Finastra GTP (apache class bypassed, GTP class active)</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">ComponentService</div><div class="svc-sub">Avalon component container</div></td>
+      <td class="center"><span class="badge b-override">overridden</span></td>
+      <td><span class="mono">TurbineComponentService</span><div class="svc-sub" style="color:#854F0B">DEPRECATED even in 2.3.3</div></td>
+      <td><span class="mono-warn">GTPComponentService</span><div class="svc-sub">+ Torque bootstrapped here</div></td>
+      <td class="center"><span class="badge b-gone">removed</span></td>
+      <td><span class="mono-warn">ComponentService REMOVED</span> from Turbine 7. Official replacement: <span class="mono-hi">AvalonComponentService</span> — which is exactly how Torque should now be initialised.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">RunDataService</div><div class="svc-sub">Request/response carrier</div></td>
+      <td class="center"><span class="badge b-override">overridden</span></td>
+      <td><span class="mono">TurbineRunDataService</span><div class="svc-sub">→ TurbineRunData</div></td>
+      <td><span class="mono-warn">GTPRunDataService</span><div class="svc-sub">DefaultGTPRunData + GTPParameterParser</div></td>
+      <td class="center"><span class="badge b-break">breaking</span></td>
+      <td><span class="mono-warn">TurbineRunData GONE</span> — replaced by <span class="mono-hi">PipelineData</span>. DefaultGTPRunData has no base class to extend. Must implement PipelineData from scratch. Widest impact in entire migration.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">GlobalCacheService</div><div class="svc-sub">Non-persistent object cache</div></td>
+      <td class="center"><span class="badge b-override">overridden</span></td>
+      <td><span class="mono">TurbineGlobalCacheService</span></td>
+      <td><span class="mono-hi">EHCacheService</span><div class="svc-sub">Finastra replaced with EHCache</div></td>
+      <td class="center"><span class="badge b-same">compatible</span></td>
+      <td>EHCache is independent of Turbine version. Finastra already made the right call here. Verify EHCache version works on Java 17. Fulcrum Cache is the Turbine 7 equivalent.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">SchedulerService</div><div class="svc-sub">Cron-like job scheduling</div></td>
+      <td class="center"><span class="badge b-override">overridden</span></td>
+      <td><span class="mono">TurbineSchedulerService</span></td>
+      <td><span class="mono-warn">GTPSchedulerService</span><div class="svc-sub">extends TurbineSchedulerService + implements InstanceListener</div></td>
+      <td class="center"><span class="badge b-break">breaking</span></td>
+      <td>Double dependency — InstanceListener removed AND TurbineSchedulerService changed. GTPSchedulerService needs rewrite. Turbine 7 recommends Fulcrum Quartz for scheduling.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">UploadService</div><div class="svc-sub">multipart/form-data handling</div></td>
+      <td class="center"><span class="badge b-override">overridden</span></td>
+      <td><span class="mono">TurbineUploadService</span></td>
+      <td><span class="mono-hi">PortalUploadService</span><div class="svc-sub">extends TurbineUploadService</div></td>
+      <td class="center"><span class="badge b-change">changed</span></td>
+      <td>Moved to Fulcrum Upload in Turbine 7. PortalUploadService parent class changes. Commons-FileUpload CVE needs immediate remediation. Medium risk — API relatively stable.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">SessionService</div><div class="svc-sub">Session management</div></td>
+      <td class="center"><span class="badge b-override">overridden</span></td>
+      <td><span class="mono">TurbineSessionService</span></td>
+      <td><span class="mono-hi">UniqueSessionService</span><div class="svc-sub">single-session-per-user enforcement</div></td>
+      <td class="center"><span class="badge b-change">changed</span></td>
+      <td>Session API relatively stable. UniqueSessionService parent class needs verification. UOBSessionValidator also involved in session lifecycle.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">XSLTService</div><div class="svc-sub">XML → HTML transformation</div></td>
+      <td class="center"><span class="badge b-override">overridden</span></td>
+      <td><span class="mono">TurbineXSLTService</span></td>
+      <td><span class="mono-warn">XSLTCachingService</span><div class="svc-sub">adds caching layer + Xalan 2.7.2</div></td>
+      <td class="center"><span class="badge b-fulcrum">Fulcrum</span></td>
+      <td>Moved to Fulcrum XSLT. Xalan 2.7.2 Java 17 strong encapsulation risk — internal XML API access may fail. Needs hands-on runtime test.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">SecurityService</div><div class="svc-sub">Users, Groups, Roles, Permissions</div></td>
+      <td class="center"><span class="badge b-override">overridden</span></td>
+      <td><span class="mono">TurbineSecurityService</span></td>
+      <td><span class="mono-warn">AdapterForTurbineSecurityService</span><div class="svc-sub">adapts to 2.3.3 model</div></td>
+      <td class="center"><span class="badge b-break">breaking</span></td>
+      <td>Security model completely restructured in Turbine 7. AdapterForTurbineSecurityService built on the old model — must rebuild. Banking security cannot have gaps.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">ServletService</div><div class="svc-sub">ServletContext encapsulation</div></td>
+      <td class="center"><span class="badge b-override">overridden</span></td>
+      <td><span class="mono">TurbineServletService</span></td>
+      <td><span class="mono-warn">GTPServletService</span><div class="svc-sub">defined but not in startup log</div></td>
+      <td class="center"><span class="badge b-change">changed</span></td>
+      <td>Same service exists in Turbine 7. GTPServletService defined but silent at startup — verify it actually loads. If silent failure in Turbine 7 it would not be visible.</td>
+    </tr>
+
+    <!-- LAYER 3 -->
+    <tr class="layer-row">
+      <td colspan="6">Layer 3 — pure GTP services (no Apache equivalent — Finastra invented these)</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">GTPDefaultTemplateService</div><div class="svc-sub">GEB page defaults</div></td>
+      <td class="center"><span class="badge b-pure">GTP only</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">No Apache equivalent</span><div class="svc-sub">extends BaseTemplateEngineService</div></td>
+      <td><span class="mono-warn">GTPDefaultTemplateEngineService</span><div class="svc-sub">controls .gtp ext, DefaultGTPLayout, TopBIBP.vm</div></td>
+      <td class="center"><span class="badge b-change">changed</span></td>
+      <td>BaseTemplateEngineService return type changed: <span class="mono-warn">Hashtable</span> → <span class="mono-hi">Configuration</span>. GTPDefaultTemplateEngineService extends this — must update. Confirmed via decompiler.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">AuditService</div><div class="svc-sub">Banking compliance audit</div></td>
+      <td class="center"><span class="badge b-pure">GTP only</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">No Apache equivalent</span></td>
+      <td><span class="mono-hi">GTPAuditService</span><div class="svc-sub">pure Finastra invention</div></td>
+      <td class="center"><span class="badge b-same">compatible</span></td>
+      <td>No Apache dependency — GTPAuditService is self-contained. Verify internal Turbine API access points (request context hooks) work in Turbine 7. Lower risk than other services.</td>
+    </tr>
+
+    <!-- NOT USED -->
+    <tr class="layer-row">
+      <td colspan="6">Not used in GEB — commented out or absent from turbine.properties</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">Crypto Service</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono">TurbineCryptoService</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">GEB uses E2EEService instead</span></td>
+      <td class="center"><span class="badge b-fulcrum">Fulcrum</span></td>
+      <td>Moved to Fulcrum Crypto. No migration action needed — GEB replaced this with its own E2EEService.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">Intake Service</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono">TurbineIntakeService</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">GEB uses Dojo client-side validation</span></td>
+      <td class="center"><span class="badge b-fulcrum">Fulcrum</span></td>
+      <td>Moved to Fulcrum Intake. No migration action needed — deliberately disabled in GEB.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">MimeType Service</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono">TurbineMimeTypeService</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">—</span></td>
+      <td class="center"><span class="badge b-fulcrum">Fulcrum</span></td>
+      <td>Moved to Fulcrum MimeType. Not used in GEB — no action needed.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">JSP Service</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">Not in 2.3.3 era</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">GEB uses Velocity not JSP</span></td>
+      <td class="center"><span class="badge b-same">compatible</span></td>
+      <td>GEB is a pure Velocity application. JSP Service never used — no migration action needed.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">Localization Service</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono">TurbineLocalizationService</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">GEB uses PortalBundle + DBPortalBundle</span></td>
+      <td class="center"><span class="badge b-fulcrum">Fulcrum</span></td>
+      <td>Moved to Fulcrum Localization. GEB has its own DB-driven localization. Verify PortalBundle and DBPortalBundle work independently.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">Parser Service</div><div class="svc-sub">ParameterParser, CookieParser</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">Not a standalone service in 2.3.3</span></td>
+      <td><span class="mono-warn">GTPParameterParser</span><div class="svc-sub">custom — embedded in RunDataService</div></td>
+      <td class="center"><span class="badge b-new">new in T7</span></td>
+      <td>Brand new dedicated service in Turbine 7 via Fulcrum Parser. GTPParameterParser was embedded in RunDataService — must now integrate with ParserService. This changes the integration point.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">Pool Service (Fulcrum)</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono">TurbinePoolService</span><div class="svc-sub">(used via Layer 1)</div></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">—</span></td>
+      <td class="center"><span class="badge b-fulcrum">Fulcrum</span></td>
+      <td>TurbinePoolService moves to Fulcrum Pool. Same function, different location. InstanceListener interface is gone.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">UI Service</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">Not used</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">GEB has own skin mechanism (TopBIBP.vm)</span></td>
+      <td class="center"><span class="badge b-same">compatible</span></td>
+      <td>Not used in GEB — no migration action needed.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">Naming Service</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">Not used</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">—</span></td>
+      <td class="center"><span class="badge b-same">compatible</span></td>
+      <td>JNDI naming — not used in GEB. No migration action needed.</td>
+    </tr>
+
+    <tr>
+      <td><div class="svc-name">Unique ID / URL Mapper / JSON / XML-RPC</div></td>
+      <td class="center"><span class="badge b-unused">not used</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">Not in 2.3.3 era or not used</span></td>
+      <td><span class="mono" style="color:var(--color-text-tertiary)">—</span></td>
+      <td class="center"><span class="badge b-same">compatible</span></td>
+      <td>These are either new in Turbine 7 or were never used in GEB. No migration action needed for any of them.</td>
+    </tr>
+
+  </tbody>
+</table>
+</div>
