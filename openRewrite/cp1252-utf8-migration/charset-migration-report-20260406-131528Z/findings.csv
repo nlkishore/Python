@@ -1,0 +1,8 @@
+path,line,column,offset,codepoint,char_repr,category,compile_impact,note
+C:\openRewrite\openRewrite\cp1252-utf8-migration\README.md,1,11,10,8594,'→',text,low_comment_only,
+C:\openRewrite\openRewrite\cp1252-utf8-migration\README.md,7,114,538,8212,'—',text,low_comment_only,
+C:\openRewrite\openRewrite\cp1252-utf8-migration\README.md,9,91,712,8220,'“',text,low_comment_only,
+C:\openRewrite\openRewrite\cp1252-utf8-migration\README.md,9,99,720,8221,'”',text,low_comment_only,
+C:\openRewrite\openRewrite\cp1252-utf8-migration\README.md,55,111,2418,8212,'—',text,low_comment_only,
+C:\openRewrite\openRewrite\cp1252-utf8-migration\README.md,56,132,2585,8212,'—',text,low_comment_only,
+C:\openRewrite\openRewrite\cp1252-utf8-migration\README.md,57,93,2721,8212,'—',text,low_comment_only,

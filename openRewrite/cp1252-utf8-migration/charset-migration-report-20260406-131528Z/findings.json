@@ -1,0 +1,79 @@
+[
+  {
+    "path": "C:\\openRewrite\\openRewrite\\cp1252-utf8-migration\\README.md",
+    "line": 1,
+    "column": 11,
+    "offset": 10,
+    "codepoint": 8594,
+    "char_repr": "'\u2192'",
+    "category": "text",
+    "compile_impact": "low_comment_only",
+    "note": ""
+  },
+  {
+    "path": "C:\\openRewrite\\openRewrite\\cp1252-utf8-migration\\README.md",
+    "line": 7,
+    "column": 114,
+    "offset": 538,
+    "codepoint": 8212,
+    "char_repr": "'\u2014'",
+    "category": "text",
+    "compile_impact": "low_comment_only",
+    "note": ""
+  },
+  {
+    "path": "C:\\openRewrite\\openRewrite\\cp1252-utf8-migration\\README.md",
+    "line": 9,
+    "column": 91,
+    "offset": 712,
+    "codepoint": 8220,
+    "char_repr": "'\u201c'",
+    "category": "text",
+    "compile_impact": "low_comment_only",
+    "note": ""
+  },
+  {
+    "path": "C:\\openRewrite\\openRewrite\\cp1252-utf8-migration\\README.md",
+    "line": 9,
+    "column": 99,
+    "offset": 720,
+    "codepoint": 8221,
+    "char_repr": "'\u201d'",
+    "category": "text",
+    "compile_impact": "low_comment_only",
+    "note": ""
+  },
+  {
+    "path": "C:\\openRewrite\\openRewrite\\cp1252-utf8-migration\\README.md",
+    "line": 55,
+    "column": 111,
+    "offset": 2418,
+    "codepoint": 8212,
+    "char_repr": "'\u2014'",
+    "category": "text",
+    "compile_impact": "low_comment_only",
+    "note": ""
+  },
+  {
+    "path": "C:\\openRewrite\\openRewrite\\cp1252-utf8-migration\\README.md",
+    "line": 56,
+    "column": 132,
+    "offset": 2585,
+    "codepoint": 8212,
+    "char_repr": "'\u2014'",
+    "category": "text",
+    "compile_impact": "low_comment_only",
+    "note": ""
+  },
+  {
+    "path": "C:\\openRewrite\\openRewrite\\cp1252-utf8-migration\\README.md",
+    "line": 57,
+    "column": 93,
+    "offset": 2721,
+    "codepoint": 8212,
+    "char_repr": "'\u2014'",
+    "category": "text",
+    "compile_impact": "low_comment_only",
+    "note": ""
+  }
+]

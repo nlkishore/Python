@@ -1,0 +1,2 @@
+# Optional: pin interpreter only
+# Python 3.9+ required. No third-party packages.

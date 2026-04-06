@@ -1,0 +1,18 @@
+root=C:\openRewrite\openRewrite\cp1252-utf8-migration
+files_scanned=1
+decoded_as_utf8=1
+decoded_as_cp1252=0
+files_written=0
+dry_run=False
+findings_total=7
+findings_low_comment_only=7
+findings_medium_literal=0
+findings_high_review=0
+
+compile_impact legend:
+  low_comment_only    — non-ASCII in comments or plain text docs (usually no compile impact).
+  medium_string_or_char — in string/char literal or attribute-like span (runtime/display may change).
+  high_review_code_or_markup — identifiers/markup/heuristic unknown (review before OpenRewrite).
+
+csv=C:\openRewrite\openRewrite\cp1252-utf8-migration\charset-migration-report-20260406-131528Z\findings.csv
+json=C:\openRewrite\openRewrite\cp1252-utf8-migration\charset-migration-report-20260406-131528Z\findings.json
