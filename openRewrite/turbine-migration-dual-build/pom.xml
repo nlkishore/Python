@@ -1,0 +1,210 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.misys.portal</groupId>
+  <artifactId>turbine-migration-dual-build</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Turbine Migration Dual Build</name>
+  <description>Multi-module dual-profile build for JDK8/JavaEE and JDK17/Jakarta using OpenRewrite.</description>
+
+  <modules>
+    <module>com.misys.portal</module>
+    <module>com.misys.portal.api</module>
+    <module>com.misys.portal.webapp</module>
+    <module>com.misys.portal.report</module>
+    <module>com.misys.portal.jetspeed</module>
+    <module>com.misys.portal.common</module>
+    <module>com.misys.portal.interfaces</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <legacy.java.release>8</legacy.java.release>
+    <modern.java.release>17</modern.java.release>
+
+    <legacy.spring.version>4.3.30.RELEASE</legacy.spring.version>
+    <modern.spring.version>6.1.14</modern.spring.version>
+
+    <rewrite.plugin.version>6.26.0</rewrite.plugin.version>
+    <antrun.plugin.version>3.1.0</antrun.plugin.version>
+    <compiler.plugin.version>3.11.0</compiler.plugin.version>
+    <resources.plugin.version>3.3.1</resources.plugin.version>
+
+    <legacy.source.dir>${project.basedir}/src/main/java</legacy.source.dir>
+    <legacy.resources.dir>${project.basedir}/src/main/resources</legacy.resources.dir>
+    <migration.work.dir>${project.build.directory}/migration-work</migration.work.dir>
+    <generated.xml.dir>${project.basedir}/src/main/xml</generated.xml.dir>
+    <generated.sources.dir>${project.build.directory}/generated-sources/xml</generated.sources.dir>
+  </properties>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${compiler.plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>${antrun.plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>${resources.plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.openrewrite.maven</groupId>
+          <artifactId>rewrite-maven-plugin</artifactId>
+          <version>${rewrite.plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>copy-and-legacy-build</id>
+      <properties>
+        <active.spring.version>${legacy.spring.version}</active.spring.version>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>copy-legacy-sources-to-workdir</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${migration.work.dir}/src/main/java</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${legacy.source.dir}</directory>
+                      <filtering>false</filtering>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>generate-java-from-xml-legacy</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <mkdir dir="${generated.sources.dir}"/>
+                    <echo message="Placeholder generation from XML for legacy build at ${generated.sources.dir}"/>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <release>${legacy.java.release}</release>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>legacy-compile-only</id>
+      <properties>
+        <active.spring.version>${legacy.spring.version}</active.spring.version>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <release>${legacy.java.release}</release>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>rewrite-migrate</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.openrewrite.maven</groupId>
+            <artifactId>rewrite-maven-plugin</artifactId>
+            <configuration>
+              <activeRecipes>
+                <recipe>com.misys.rewrite.turbine7.upgrade</recipe>
+                <recipe>com.misys.rewrite.torque7.upgrade</recipe>
+                <recipe>com.misys.rewrite.jakarta.upgrade</recipe>
+                <recipe>com.misys.rewrite.spring6.upgrade</recipe>
+              </activeRecipes>
+              <failOnDryRunResults>false</failOnDryRunResults>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>modern-build</id>
+      <properties>
+        <active.spring.version>${modern.spring.version}</active.spring.version>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>generate-java-from-xml-modern</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <mkdir dir="${generated.sources.dir}"/>
+                    <echo message="Placeholder generation from XML for modern build at ${generated.sources.dir}"/>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <release>${modern.java.release}</release>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>
