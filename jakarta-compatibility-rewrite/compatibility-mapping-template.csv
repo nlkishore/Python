@@ -1,0 +1,4 @@
+library_group_id,library_artifact_id,current_version,javaee_api_used,target_group_id,target_artifact_id,target_version,migration_action,risk_level,owner,status,notes
+javax.servlet,javax.servlet-api,4.0.1,javax.servlet,jakarta.servlet,jakarta.servlet-api,6.0.x,upgrade,medium,platform-team,planned,Servlet API coordinate migration
+javax.validation,validation-api,2.0.1.Final,javax.validation,jakarta.validation,jakarta.validation-api,3.0.x,upgrade,medium,platform-team,planned,Bean validation migration
+legacy.vendor,legacy-framework,1.2.3,javax.persistence,,, ,replace,high,app-team,planned,No Jakarta release available

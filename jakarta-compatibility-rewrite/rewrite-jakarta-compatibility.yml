@@ -1,0 +1,147 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.company.migration.FindJavaEeDependencies
+displayName: Find Java EE related dependencies
+description: Search Maven dependencies that are commonly tied to javax/Java EE era APIs.
+tags:
+  - javaee
+  - jakarta
+  - discovery
+recipeList:
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.servlet
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.persistence
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.validation
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.ws.rs
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.xml.bind
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.annotation
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.jms
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.mail
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.activation
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javax.transaction
+      artifactId: "*"
+  - org.openrewrite.maven.search.FindDependency:
+      groupId: javaee
+      artifactId: "*"
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.company.migration.FindJavaEeApisInCode
+displayName: Find Java EE APIs in source
+description: Search source code imports/types using javax.* APIs.
+tags:
+  - javaee
+  - jakarta
+  - source-analysis
+recipeList:
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.servlet..*
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.persistence..*
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.validation..*
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.ws.rs..*
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.xml.bind..*
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.annotation..*
+      matchInherited: true
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.transaction..*
+      matchInherited: true
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.company.migration.MigrateJavaEeToJakartaBaseline
+displayName: Migrate Java EE baseline to Jakarta EE
+description: Baseline recipe for javax->jakarta package migration and common dependency coordinate updates.
+tags:
+  - jakarta
+  - javaee
+  - migration
+recipeList:
+  - org.openrewrite.java.migrate.UpgradeToJava17
+  - org.openrewrite.java.migrate.jakarta.JavaxMigrationToJakarta
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.servlet
+      newPackageName: jakarta.servlet
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.persistence
+      newPackageName: jakarta.persistence
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.validation
+      newPackageName: jakarta.validation
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.ws.rs
+      newPackageName: jakarta.ws.rs
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.xml.bind
+      newPackageName: jakarta.xml.bind
+      recursive: true
+  - org.openrewrite.java.ChangePackage:
+      oldPackageName: javax.annotation
+      newPackageName: jakarta.annotation
+      recursive: true
+  - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
+      oldGroupId: javax.servlet
+      oldArtifactId: javax.servlet-api
+      newGroupId: jakarta.servlet
+      newArtifactId: jakarta.servlet-api
+      newVersion: 6.0.x
+  - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
+      oldGroupId: javax.validation
+      oldArtifactId: validation-api
+      newGroupId: jakarta.validation
+      newArtifactId: jakarta.validation-api
+      newVersion: 3.0.x
+  - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
+      oldGroupId: javax.persistence
+      oldArtifactId: javax.persistence-api
+      newGroupId: jakarta.persistence
+      newArtifactId: jakarta.persistence-api
+      newVersion: 3.1.x
+  - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
+      oldGroupId: javax.ws.rs
+      oldArtifactId: javax.ws.rs-api
+      newGroupId: jakarta.ws.rs
+      newArtifactId: jakarta.ws.rs-api
+      newVersion: 3.1.x
+  - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
+      oldGroupId: javax.annotation
+      oldArtifactId: javax.annotation-api
+      newGroupId: jakarta.annotation
+      newArtifactId: jakarta.annotation-api
+      newVersion: 2.1.x
+  - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
+      oldGroupId: javax.xml.bind
+      oldArtifactId: jaxb-api
+      newGroupId: jakarta.xml.bind
+      newArtifactId: jakarta.xml.bind-api
+      newVersion: 4.0.x
