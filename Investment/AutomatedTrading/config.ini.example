@@ -1,0 +1,60 @@
+# Copy to config.ini and edit non-secret settings.
+# Copy secrets.local.ini.example to secrets.local.ini for WhatsApp credentials.
+
+[trading]
+symbols = AAPL, MSFT, GOOGL
+
+output_csv = trading_targets.csv
+output_csv_adaptive_ai = adaptive_ai_targets.csv
+output_csv_adaptive_volume = adaptive_trader_volume.csv
+output_csv_chart_support = chart_support_signals.csv
+
+volume_filter_enabled = true
+
+chart_pivot_left = 3
+chart_pivot_right = 3
+chart_atr_proximity_mult = 1.15
+
+chart_watch_enabled = false
+chart_watch_interval_seconds = 300
+chart_watch_timezone = America/New_York
+chart_watch_session_start = 09:30
+chart_watch_session_end = 16:00
+chart_watch_skip_weekends = true
+chart_watch_log_when_closed = false
+
+whatsapp_enabled = false
+whatsapp_id_instance =
+whatsapp_api_token_instance =
+whatsapp_target_phone =
+
+whatsapp_notify_signals = BUY_HEURISTIC, SELL_HEURISTIC
+whatsapp_notify_cooldown_minutes = 120
+whatsapp_notify_price_bucket_pct = 0.5
+whatsapp_notify_state_file = chart_support_notify_state.json
+
+[ibkr]
+ibkr_data_source = client_portal
+cp_gateway_host = 127.0.0.1
+cp_gateway_port = 5000
+cp_request_timeout_seconds = 60
+cp_ssodh_compete = true
+cp_brokerage_auth_wait_seconds = 45
+sec_type = STK
+host = 127.0.0.1
+port = 7497
+client_id = 12
+readonly = true
+exchange = SMART
+currency = USD
+bar_size = 5 mins
+duration = 5 D
+what_to_show = TRADES
+use_rth = true
+request_pause_seconds = 11
+pivot_left = 5
+pivot_right = 5
+atr_proximity_mult = 1.15
+min_bars_recommended = 200
+output_csv = chart_support_signals_ibkr.csv
+whatsapp_notify_state_file = chart_support_notify_state_ibkr.json

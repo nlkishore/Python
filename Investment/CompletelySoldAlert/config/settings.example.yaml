@@ -1,0 +1,34 @@
+# Copy to settings.yaml and customize. Secrets can use env vars (see README).
+
+alert:
+  # true = WhatsApp lists ALL completely sold stocks with current prices (no -5% filter)
+  notify_all_positions: true
+  # used only when notify_all_positions is false
+  price_drop_threshold_pct: -5.0
+
+data:
+  max_age_hours: 24
+  flex_project_dir: C:/Investment/IBKR-Flex-BuySell
+  report_path: C:/Investment/reports/IBKR_BuySell_Since_2020.xlsx
+  flex_python: python
+  refresh_mode: from_downloads   # from_downloads | download
+
+schedule:
+  run_market_days_only: true
+  market_calendar: NYSE
+  timezone: America/New_York
+
+whatsapp:
+  provider: green_api
+  # Leave empty to auto-load from C:/Investment/AutomatedTrading/config.ini (AlertApp / chart scripts)
+  id_instance: ""
+  api_token: ""
+  target_phone: ""
+
+notify:
+  mode: digest
+  cooldown_hours: 24
+  digest_max_symbols: 15
+
+llm:
+  enabled: false

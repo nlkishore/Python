@@ -1,0 +1,45 @@
+# Copy to config.ini and fill in values from IBKR Client Portal:
+# Performance & Reports → Flex Queries → (your query) → Configure
+# Also: Flex Web Service → Generate token (expires periodically)
+
+[flex]
+; Flex Web Service token (required for --download) — use secrets.local.ini
+token = YOUR_IBKR_FLEX_TOKEN
+
+; Flex Query ID for Activity / Trades (must include Buy and Sell stock trades)
+query_id = YOUR_FLEX_QUERY_ID
+
+# SendRequest date range (yyyymmdd). IBKR allows max 366 days per request;
+# the script automatically splits 2020→today into yearly windows.
+from_date = 20200101
+to_date = 20260530
+
+# Report filter: keep trades on or after this calendar year
+start_year = 2020
+
+# Optional: manual YTD baseline for --sync-ytd compare (Flex or Activity CSV)
+# ytd_baseline = downloads/flex_1524275_20251230_20260530.csv
+
+base_url = https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService
+poll_seconds = 10
+max_poll_attempts = 36
+user_agent = Python/3.11 local-rag-ibkr-flex
+
+[output]
+# Excel workbook path (relative paths are under this script folder)
+report_path = reports/IBKR_BuySell_Since_2020.xlsx
+download_dir = downloads
+
+# --- trade_history baseline / refresh (python -m trade_history) ---
+[history]
+# First trade / account open date (ISO). Defaults to flex.from_date if empty.
+account_open_date = 2020-01-01
+refresh_overlap_days = 7
+store_dir = data/store
+state_path = data/state.json
+report_path = reports/IBKR_TradeHistory.xlsx
+# Optional: override IBKR-Transaction folder (default: ../IBKR-Transaction)
+# transactions_dir =
+# Optional separate Flex query for corporate actions (defaults to flex.query_id)
+# corporate_query_id =
+fetch_market_prices = true

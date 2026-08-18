@@ -1,0 +1,36 @@
+# Copy to config.ini and edit. Do not commit config.ini if it contains secrets.
+#
+# Per-symbol fixed reference prices (your own cost basis / strike / target level):
+#   see config.ini.example-fixed-ref
+
+[stock]
+# Multiple symbols: comma-separated (Yahoo Finance tickers, e.g. AAPL, MSFT, RELIANCE.NS, ^GSPC)
+symbols = AAPL, MSFT, GOOG
+# Legacy: single symbol only — used if "symbols" is empty or missing
+# symbol = AAPL
+
+# Seconds between full monitoring cycles (all symbols checked each cycle)
+check_interval_seconds = 300
+# Alert when price is at least this % above the reference price (applies to every symbol)
+up_percent = 2.0
+# Alert when price is at least this % below the reference price (applies to every symbol)
+down_percent = 2.0
+# reference = previous_close | open  (daily bar)
+reference = previous_close
+# Minimum seconds between WhatsApp alerts per symbol (each ticker has its own cooldown)
+alert_cooldown_seconds = 3600
+
+[whatsapp]
+# method: callmebot | twilio
+# CallMeBot: https://www.callmebot.com/blog/free-api-whatsapp-messages/
+# Message their WhatsApp bot to get apikey.
+method = callmebot
+# International number digits only, no + (e.g. 14155552671 for US)
+phone = 1234567890
+apikey = YOUR_CALLMEBOT_APIKEY
+
+# Twilio (only if method = twilio)
+# account_sid =
+# auth_token =
+# from_whatsapp = whatsapp:+14155238886
+# to_whatsapp = whatsapp:+1234567890

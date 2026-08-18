@@ -1,0 +1,9 @@
+# Root monitor (CallMeBot / Twilio)
+yfinance>=0.2.40
+requests>=2.31.0
+
+# Subproject manifests (install when using those folders):
+#   AlertApp/requirements.txt
+#   AutomatedTrading/requirements.txt
+#   IBKR-Flex-BuySell/requirements.txt
+#   CompletelySoldAlert/requirements.txt

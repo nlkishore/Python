@@ -1,0 +1,6 @@
+pandas>=2.0.0
+yfinance>=0.2.40
+# Optional WhatsApp (ChartSupportAndSignals.py):
+# whatsapp-api-client-python>=0.0.49
+# Optional IBKR socket mode (ChartSupportAndSignals_IBKR.py tws_socket):
+# ib-insync>=0.9.86

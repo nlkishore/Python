@@ -1,0 +1,55 @@
+# IBKR Flex Buy/Sell — Cursor prompts (add new prompts below)
+# Project: C:\Investment\IBKR-Flex-BuySell
+
+---
+
+## Report generation
+
+1. Regenerate buy/sell report after config change
+   - Updated to_date in config.ini. Clean up downloaded CSVs, fresh Flex download, regenerate Excel with Completely_Sold, Buys, Sells, Still_Holding.
+
+2. Full clean download (skip cache for failed windows)
+   python flex_buysell_report.py --clean-all --download
+
+3. Rebuild from cache only (no Flex API)
+   python flex_buysell_report.py --from-downloads
+
+4. Sync current-year YTD from Latest Activity CSV
+   - Export IBKR Client Portal → Performance & Reports → Statements → Activity → Year to Date → CSV
+   - Save to: C:\Investment\IBKR-Transaction\Latest\
+   python flex_buysell_report.py --sync-ytd
+
+5. Compare manual YTD vs auto import
+   python flex_buysell_report.py --sync-ytd --compare-baseline downloads\manual_baseline_2026_ytd.csv
+
+---
+
+## Support / resistance (completely sold stocks)
+
+6. Generate S/R report for all Completely_Sold symbols
+   python completely_sold_support_report.py
+   python completely_sold_support_report.py --from-downloads
+
+---
+
+## Troubleshooting
+
+7. List Flex windows skipped (no API retry)
+   python flex_buysell_report.py --list-skipped
+
+8. Force retry all Flex windows
+   python flex_buysell_report.py --force-download --download
+
+9. Clear skip cache and retry
+   python flex_buysell_report.py --clear-skip-cache
+
+---
+
+## New prompts (add below)
+
+10. Trade history baseline + incremental + Symbol_PnL
+    python -m trade_history baseline --offline
+    python -m trade_history refresh --offline
+    python -m trade_history status
+    python -m trade_history export
+    Output: reports/IBKR_TradeHistory.xlsx (Symbol_PnL, Corporate_Actions, By_Symbol_Trades)

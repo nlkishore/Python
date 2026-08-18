@@ -1,0 +1,26 @@
+# Example: each symbol uses YOUR configured reference price (not previous close / open).
+# Copy to config.ini (or use --config path) and edit. Do not commit secrets.
+#
+# Rules:
+#   - symbols and reference_prices are comma-separated in the SAME ORDER (1:1).
+#   - use_configured_reference_prices = true enables this mode.
+#   - reference = previous_close | open is IGNORED for pricing when fixed refs are on
+#     (still safe to leave in file for documentation).
+#   - Current price always comes from Yahoo Finance (live/last daily close per yfinance).
+
+[stock]
+symbols = AAPL, MSFT, RELIANCE.NS
+use_configured_reference_prices = true
+# One price per symbol above: e.g. AAPL=195.00, MSFT=378.50, RELIANCE.NS=2450.00
+reference_prices = 195.00, 378.50, 2450.00
+
+check_interval_seconds = 300
+up_percent = 2.0
+down_percent = 2.0
+reference = previous_close
+alert_cooldown_seconds = 3600
+
+[whatsapp]
+method = callmebot
+phone = 1234567890
+apikey = YOUR_CALLMEBOT_APIKEY

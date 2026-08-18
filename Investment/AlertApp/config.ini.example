@@ -1,0 +1,18 @@
+; Copy to config.ini and edit. Do not commit config.ini if it contains secrets.
+; WhatsApp credentials: copy secrets.local.ini.example -> secrets.local.ini
+
+[watchlist]
+; symbol = reference_price, up_pct, down_pct
+AAPL = 230.00, 2.0, 2.0
+TSLA = 320.00, 5.0, 5.0
+
+[whatsapp]
+; Or set GREEN_API_ID_INSTANCE, GREEN_API_TOKEN, WHATSAPP_TARGET_PHONE env vars
+id_instance = YOUR_GREEN_API_ID_INSTANCE
+api_token = YOUR_GREEN_API_TOKEN
+target_phone = 1234567890
+
+; Seconds between stock price checks
+check_interval_seconds = 600
+; Seconds between incoming command polls
+command_poll_seconds = 2

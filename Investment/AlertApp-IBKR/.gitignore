@@ -1,0 +1,4 @@
+# Runtime artifacts and local secrets — not for version control
+listener.log
+heartbeat_url.txt
+config.ini

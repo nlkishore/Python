@@ -1,0 +1,29 @@
+[
+  {
+    "Symbol": "AAPL",
+    "Last_Sold_Price": 200.0,
+    "Current_Market_Price": 188.0,
+    "Change_Since_Last_Sold_Pct": -6.0,
+    "Last_Sold_Date": "2026-04-15",
+    "Profit": 1200.0,
+    "Profit_Pct": 8.5
+  },
+  {
+    "Symbol": "MSFT",
+    "Last_Sold_Price": 420.0,
+    "Current_Market_Price": 410.0,
+    "Change_Since_Last_Sold_Pct": -2.38,
+    "Last_Sold_Date": "2026-03-01",
+    "Profit": 500.0,
+    "Profit_Pct": 3.2
+  },
+  {
+    "Symbol": "TSLA",
+    "Last_Sold_Price": 250.0,
+    "Current_Market_Price": 230.0,
+    "Change_Since_Last_Sold_Pct": -8.0,
+    "Last_Sold_Date": "2026-05-10",
+    "Profit": -300.0,
+    "Profit_Pct": -4.1
+  }
+]
