@@ -2,7 +2,7 @@
 
 Future reference for all investment automation under this folder: what each feature does, how to run it, and what to configure first.
 
-**Last reviewed:** May 2026
+**Last reviewed:** 2026-08-19 (Phase 1 cleanup complete — secrets rotated, shared modules added, alert path consolidated, dependencies documented)
 
 ---
 
@@ -10,16 +10,19 @@ Future reference for all investment automation under this folder: what each feat
 
 | Folder | Purpose |
 |--------|---------|
-| `reports\` | **Canonical IBKR Excel outputs** (Buy/Sell, TradeHistory, AccountStatement P1) — see `IBKR-REPORTS-GUIDE.md` |
-| `AlertApp\` | Green API WhatsApp price alerts (hardcoded watchlist) |
-| `AlertApp-IBKR\` | IBKR + support-level alert prototype (not fully configured) |
-| `AutomatedTrading\` | EMA / ATR / chart heuristics; Yahoo or IBKR data; optional WhatsApp |
+| `reports\` | **Canonical IBKR Excel outputs** (Buy/Sell, TradeHistory, AccountStatement P1, Symbol P&L) — see `IBKR-REPORTS-GUIDE.md` |
+| `shared\` | **Shared helpers** — `config_loader.py` (merged INI + env, UTF-8 BOM safe), `alert_watchlist.py` (watchlist parser) |
+| `AlertApp\` | **Active alert** — Green API WhatsApp price alerts via `backgroundAlert1.py`; start with `start_stock_alert.bat`; `archive\` holds retired scripts |
+| `AlertApp-IBKR\` | IBKR + support-level alert prototype (not yet production-hardened) |
+| `AutomatedTrading\` | EMA / ATR / chart heuristics; Yahoo or IBKR data; optional WhatsApp; shared `indicators.py` |
 | `IBKR-Client-GateWay\` | IBKR Client Portal REST gateway (port 5000) |
 | `IBKR-Transaction\` | IBKR CSV drop folder (`Latest\`) for Activity / TRANSACTIONS |
 | `IBKR-Download\` | Account Statement CSVs + P1 report generator |
 | `IBKR-Flex-BuySell\` | Flex download, Buy/Sell + trade_history tools |
+| `IBKR-SymbolPnL\` | **Canonical** per-symbol P&L — `symbol_pnl_from_buysell.py` → `reports\IBKR_Symbol_PnL_From_BuySell.xlsx` |
 | `ListTop5SectorwiseStocks\` | Top 5 ETF holdings by sector |
 | `SeasonalStocks\` | Seasonal peak/trough month analysis (IBKR history) |
+| `examples\` | Debug / one-off scripts (e.g. `ema_single_ticker_test.py`) — not part of main workflow |
 | `Documents\` | Personal PDFs (no scripts) |
 | `FSM\` | FSM broker Excel records (data only) |
 | `CompletelySoldAlert\` | LangGraph alert when sold stocks drop below config % vs last sold; WhatsApp digest |
@@ -52,15 +55,27 @@ Required by: `SeasonalStocks`, `AutomatedTrading\*IBKR*`, `ClientPortalMarketSna
 
 Full guide: **`IBKR-Client-GateWay\README.md`**
 
-### WhatsApp notification methods (used in different scripts)
+### Secrets & credential files
+
+All live credentials must go in **gitignored** `secrets.local.ini` files. Never put them in the committed `config.ini`.
+
+| Script / folder | Credentials file | Keys |
+|----------------|-----------------|------|
+| `AlertApp\` | `AlertApp\secrets.local.ini` → `[whatsapp]` | `id_instance`, `api_token`, `target_phone` |
+| `AutomatedTrading\` | `AutomatedTrading\secrets.local.ini` → `[trading]` | `whatsapp_id_instance`, `whatsapp_api_token_instance`, `whatsapp_target_phone` |
+| `IBKR-Flex-BuySell\` | `IBKR-Flex-BuySell\secrets.local.ini` → `[flex]` | `token`, `query_id` |
+
+Copy the `.example` file in each folder to get started. Environment variables override INI values (see `shared\config_loader.py`).
+
+### WhatsApp notification methods
 
 | Method | Used in | Config location |
 |--------|---------|-----------------|
 | **CallMeBot** | Root `stock_whatsapp_monitor.py` | `config.ini` → `[whatsapp]` |
 | **Twilio** | Root monitor (optional) | `config.ini` → `[whatsapp]` |
-| **Green API** | `AlertApp\`, `AutomatedTrading\` chart scripts | Hardcoded or `AutomatedTrading\config.ini` → `[trading]` |
+| **Green API** | `AlertApp\backgroundAlert1.py`, `AutomatedTrading\` chart scripts | `secrets.local.ini` → `[whatsapp]` / `[trading]` |
 
-**Never commit files with live API keys** (`config.ini` is gitignored at root).
+**Never commit files with live API keys.** See `.gitignore` for the full exclusion list.
 
 ---
 
