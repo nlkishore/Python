@@ -2,28 +2,37 @@
 """
 Green API WhatsApp stock monitor + command listener (consolidated alert app).
 
-Runs two loops in one process:
-  - Price monitor   — polls Yahoo Finance every CHECK_INTERVAL seconds; sends a
-                      WhatsApp alert when a stock moves beyond a configured %.
-  - Command listener— polls Green API for incoming/outgoing WhatsApp messages.
+Runs two monitoring loops in one process:
 
-Supported commands (send to linked WhatsApp or from the Green API web console):
-  STATUS              — confirm listener is online; lists tracked symbols
+1. MANUAL WATCHLIST (config.ini [watchlist])
+   Polls Yahoo Finance every CHECK_INTERVAL seconds. Alerts on UP or DOWN breach
+   vs a manually configured reference price and threshold %.
+
+2. REBUY WATCHLIST (auto-loaded from Completely_Sold sheet in BuySell Excel)
+   Monitors all completely-sold symbols using the weighted-average sell price as
+   the reference. Fires a "rebuy candidate" alert when the current price is ≤
+   (avg_sell_price × (1 - rebuy_drop_pct / 100)), i.e. when the stock has
+   fallen enough below what you sold it for to be worth re-entering.
+   Default rebuy_drop_pct = 5.0 (configurable via [rebuy] drop_pct in config.ini).
+
+Supported WhatsApp commands:
+  STATUS              — confirm listener is online; lists symbol counts
+  WATCHLIST           — show manual watchlist symbols + reference prices
+  REBUY               — show current rebuy candidate list with avg sell prices
   SUPPORT AAPL        — 3 recent pivot support levels (6-month Yahoo history)
   SOLD  or  SEND      — run CompletelySoldAlert digest on demand
-  WATCHLIST           — show current watchlist symbols and reference prices
+  RELOAD              — reload both watchlists from disk/Excel (no restart needed)
 
 Extras:
   - Single-instance Windows named mutex (prevents two listeners racing on the
-    same Green API instance and causing 502 RMQ_ERROR / dropped messages).
+    same Green API instance causing 502 RMQ_ERROR / dropped messages).
   - External heartbeat (dead-man's switch): listener pings a URL every N seconds
     so an external service (e.g. healthchecks.io) can alert your phone if the
     whole machine goes down. Configure via LISTENER_HEARTBEAT_URL env var,
     heartbeat_url.txt in this folder, or config.ini [monitoring] heartbeat_url.
 
-Credentials (pick any — later sources override earlier):
-  1. Environment variables: GREEN_API_ID_INSTANCE, GREEN_API_TOKEN,
-     WHATSAPP_TARGET_PHONE
+Credentials (pick any — env vars override INI):
+  1. GREEN_API_ID_INSTANCE, GREEN_API_TOKEN, WHATSAPP_TARGET_PHONE env vars
   2. AlertApp/secrets.local.ini  [whatsapp]  (gitignored)
   3. AlertApp/config.ini         [whatsapp]
 """
@@ -38,6 +47,7 @@ import time
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import yfinance as yf
 from whatsapp_api_client_python import API
@@ -50,8 +60,9 @@ INVESTMENT_ROOT = SCRIPT_DIR.parent
 if str(INVESTMENT_ROOT) not in sys.path:
     sys.path.insert(0, str(INVESTMENT_ROOT))
 
-from shared.alert_watchlist import load_watchlist  # noqa: E402
+from shared.alert_watchlist import load_watchlist          # noqa: E402
 from shared.config_loader import green_api_credentials, read_merged_ini  # noqa: E402
+from shared.sold_watchlist import load_sold_watchlist      # noqa: E402
 
 SOLD_ALERT_BAT = INVESTMENT_ROOT / "CompletelySoldAlert" / "run-alert.bat"
 _HEARTBEAT_URL_FILE = SCRIPT_DIR / "heartbeat_url.txt"
@@ -59,7 +70,6 @@ _HEARTBEAT_URL_FILE = SCRIPT_DIR / "heartbeat_url.txt"
 # ---------------------------------------------------------------------------
 # Single-instance lock (Windows named mutex)
 # Green API allows only ONE active receiveNotification consumer per instance.
-# Two listeners cause "consumer closed" (502 RMQ_ERROR) and dropped messages.
 # ---------------------------------------------------------------------------
 _SINGLE_INSTANCE_MUTEX_NAME = "Global\\AlertApp_GreenAPI_Listener"
 _ERROR_ALREADY_EXISTS = 183
@@ -67,7 +77,6 @@ _single_instance_handle = None  # kept alive for process lifetime
 
 
 def _acquire_single_instance_lock() -> bool:
-    """Return True if this is the only listener; False if one already runs."""
     global _single_instance_handle
     if os.name != "nt":
         return True
@@ -104,7 +113,6 @@ def _configure_stdio_utf8() -> None:
 def _load_settings() -> tuple[str, str, str, int, int]:
     parser = read_merged_ini(SCRIPT_DIR)
     id_inst, token, phone = green_api_credentials(parser, section="whatsapp")
-    # Fall back to [trading] section (AutomatedTrading style)
     if (not id_inst or not token or not phone) and parser.has_section("trading"):
         id_inst, token, phone = green_api_credentials(parser, section="trading")
     if not id_inst or not token or not phone:
@@ -113,7 +121,7 @@ def _load_settings() -> tuple[str, str, str, int, int]:
             "Copy AlertApp/config.ini.example → config.ini, then\n"
             "copy AlertApp/secrets.local.ini.example → secrets.local.ini\n"
             "and fill in your Green API credentials.\n"
-            "Or set GREEN_API_ID_INSTANCE / GREEN_API_TOKEN / WHATSAPP_TARGET_PHONE env vars."
+            "Or set GREEN_API_ID_INSTANCE / GREEN_API_TOKEN / WHATSAPP_TARGET_PHONE."
         )
     check_interval = 600
     poll_seconds = 2
@@ -123,8 +131,28 @@ def _load_settings() -> tuple[str, str, str, int, int]:
     return id_inst, token, phone, check_interval, poll_seconds
 
 
+def _load_rebuy_settings() -> tuple[float, Optional[Path], list[str]]:
+    """
+    Returns (drop_pct, workbook_path, exclude_symbols).
+    drop_pct        — alert when price ≤ avg_sell * (1 - drop_pct/100). Default 5.0.
+    workbook_path   — path to BuySell Excel. None = use shared default.
+    exclude_symbols — list of symbols to skip (delisted, etc.).
+    """
+    parser = read_merged_ini(SCRIPT_DIR)
+    if not parser.has_section("rebuy"):
+        return 5.0, None, []
+
+    drop_pct = parser.getfloat("rebuy", "drop_pct", fallback=5.0)
+    wb_str = parser.get("rebuy", "workbook_path", fallback="").strip()
+    workbook_path = Path(wb_str) if wb_str else None
+
+    exclude_raw = parser.get("rebuy", "exclude_symbols", fallback="").strip()
+    exclude = [s.strip().upper() for s in exclude_raw.split(",") if s.strip()]
+
+    return drop_pct, workbook_path, exclude
+
+
 def _load_heartbeat_url() -> str:
-    """Heartbeat ping URL from env, heartbeat_url.txt, or config.ini [monitoring]."""
     url = os.environ.get("LISTENER_HEARTBEAT_URL", "").strip()
     if url:
         return url
@@ -145,7 +173,6 @@ HEARTBEAT_INTERVAL_SECONDS = 300
 
 
 def send_heartbeat(url: str) -> None:
-    """Best-effort GET to the heartbeat URL; never disrupts the listener."""
     if not url:
         return
     try:
@@ -156,11 +183,26 @@ def send_heartbeat(url: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Initialise (module-level so watchdog can import without running)
+# Initialise
 # ---------------------------------------------------------------------------
 _configure_stdio_utf8()
 ID_INSTANCE, API_TOKEN_INSTANCE, TARGET_PHONE, CHECK_INTERVAL, POLL_SECONDS = _load_settings()
-WATCHLIST = load_watchlist(SCRIPT_DIR)
+REBUY_DROP_PCT, _REBUY_WORKBOOK, _REBUY_EXCLUDE = _load_rebuy_settings()
+
+# Manual watchlist: {SYMBOL: [ref_price, up_pct, down_pct]}
+WATCHLIST: dict[str, list[float]] = load_watchlist(SCRIPT_DIR)
+
+# Rebuy watchlist: {SYMBOL: avg_sell_price}
+REBUY_WATCHLIST: dict[str, float] = load_sold_watchlist(
+    workbook_path=_REBUY_WORKBOOK,
+    exclude_symbols=_REBUY_EXCLUDE,
+)
+
+# Alert cooldown for rebuy: avoid spamming the same symbol every cycle.
+# {SYMBOL: epoch_seconds of last alert sent}
+_REBUY_ALERT_SENT: dict[str, float] = {}
+_REBUY_COOLDOWN_SECONDS = 3600  # re-alert at most once per hour per symbol
+
 greenAPI = API.GreenAPI(ID_INSTANCE, API_TOKEN_INSTANCE)
 
 
@@ -175,14 +217,14 @@ def send_whatsapp(text: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Price monitor
+# Manual watchlist monitor
 # ---------------------------------------------------------------------------
 def monitor_stocks() -> None:
     now = datetime.now().strftime("%H:%M:%S")
-    print(f"[{now}] Periodic stock check...", flush=True)
+    print(f"[{now}] Manual watchlist check ({len(WATCHLIST)} symbols)...", flush=True)
 
-    for symbol, config in WATCHLIST.items():
-        ref_price, up_pct, down_pct = config
+    for symbol, cfg in WATCHLIST.items():
+        ref_price, up_pct, down_pct = cfg
         try:
             data = yf.Ticker(symbol).history(period="1d")
         except Exception as exc:
@@ -198,20 +240,102 @@ def monitor_stocks() -> None:
         if change >= up_pct:
             send_whatsapp(
                 f"🚀 *UP ALERT*: {symbol}\n"
-                f"Price: ${current_price:.2f}  Change: {change:+.2f}%"
+                f"Price: ${current_price:.2f}  Change: {change:+.2f}%\n"
+                f"(Ref: ${ref_price:.2f}, threshold ↑{up_pct}%)"
             )
         elif change <= -down_pct:
             send_whatsapp(
                 f"📉 *DOWN ALERT*: {symbol}\n"
-                f"Price: ${current_price:.2f}  Change: {change:+.2f}%"
+                f"Price: ${current_price:.2f}  Change: {change:+.2f}%\n"
+                f"(Ref: ${ref_price:.2f}, threshold ↓{down_pct}%)"
             )
+
+
+# ---------------------------------------------------------------------------
+# Rebuy watchlist monitor
+# ---------------------------------------------------------------------------
+def monitor_rebuy() -> None:
+    """
+    Alert when a completely-sold symbol's current price has dropped ≥ REBUY_DROP_PCT
+    below the average price at which it was sold — a potential re-buy signal.
+    """
+    if not REBUY_WATCHLIST:
+        return
+
+    now_str = datetime.now().strftime("%H:%M:%S")
+    now_epoch = time.time()
+    print(
+        f"[{now_str}] Rebuy watchlist check ({len(REBUY_WATCHLIST)} symbols, "
+        f"threshold ↓{REBUY_DROP_PCT}% below avg sell)...",
+        flush=True,
+    )
+
+    for symbol, avg_sell in REBUY_WATCHLIST.items():
+        try:
+            data = yf.Ticker(symbol).history(period="1d")
+        except Exception as exc:
+            print(f"  [{symbol}] fetch error: {exc}", flush=True)
+            continue
+        if data.empty:
+            continue
+
+        current_price = float(data["Close"].iloc[-1])
+        # How far below the avg sell price is the current price (positive = cheaper)
+        drop_pct = ((avg_sell - current_price) / avg_sell) * 100
+        print(
+            f"  {symbol}: now=${current_price:.2f}  "
+            f"avg_sold=${avg_sell:.2f}  "
+            f"drop={drop_pct:+.2f}%",
+            flush=True,
+        )
+
+        if drop_pct >= REBUY_DROP_PCT:
+            # Check cooldown — don't spam the same symbol every cycle
+            last_sent = _REBUY_ALERT_SENT.get(symbol, 0.0)
+            if now_epoch - last_sent < _REBUY_COOLDOWN_SECONDS:
+                continue
+
+            send_whatsapp(
+                f"♻️ *REBUY CANDIDATE*: {symbol}\n"
+                f"Current: ${current_price:.2f}\n"
+                f"Avg sold at: ${avg_sell:.2f}\n"
+                f"Drop below sold price: {drop_pct:.1f}% (threshold ↓{REBUY_DROP_PCT}%)\n"
+                f"Consider re-entering this position."
+            )
+            _REBUY_ALERT_SENT[symbol] = now_epoch
+            print(
+                f"  [{symbol}] Rebuy alert sent "
+                f"(drop {drop_pct:.1f}% >= {REBUY_DROP_PCT}%)",
+                flush=True,
+            )
+
+
+# ---------------------------------------------------------------------------
+# Reload both watchlists from disk (RELOAD command)
+# ---------------------------------------------------------------------------
+def reload_watchlists() -> str:
+    global WATCHLIST, REBUY_WATCHLIST, REBUY_DROP_PCT, _REBUY_WORKBOOK, _REBUY_EXCLUDE
+    try:
+        WATCHLIST = load_watchlist(SCRIPT_DIR)
+        REBUY_DROP_PCT, _REBUY_WORKBOOK, _REBUY_EXCLUDE = _load_rebuy_settings()
+        REBUY_WATCHLIST = load_sold_watchlist(
+            workbook_path=_REBUY_WORKBOOK,
+            exclude_symbols=_REBUY_EXCLUDE,
+        )
+        return (
+            f"✅ Reloaded.\n"
+            f"Manual watchlist: {len(WATCHLIST)} symbols\n"
+            f"Rebuy watchlist:  {len(REBUY_WATCHLIST)} symbols "
+            f"(threshold ↓{REBUY_DROP_PCT}%)"
+        )
+    except Exception as exc:  # noqa: BLE001
+        return f"❌ Reload failed: {exc}"
 
 
 # ---------------------------------------------------------------------------
 # SUPPORT command helper
 # ---------------------------------------------------------------------------
 def get_support_levels(symbol: str) -> list[float]:
-    """Pivot lows from last 6 months (Yahoo Finance)."""
     try:
         df = yf.Ticker(symbol).history(period="6mo")
         if df.empty:
@@ -240,7 +364,6 @@ def get_support_levels(symbol: str) -> list[float]:
 # SOLD / SEND command helper
 # ---------------------------------------------------------------------------
 def run_sold_alert() -> tuple[bool, str]:
-    """Launch CompletelySoldAlert run-alert.bat; it sends its own WhatsApp digest."""
     if not SOLD_ALERT_BAT.is_file():
         return False, f"run-alert.bat not found at {SOLD_ALERT_BAT}"
     try:
@@ -281,18 +404,49 @@ def handle_command(msg_text: str, *, is_outgoing: bool) -> None:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     if msg_text == "STATUS":
-        symbols = ", ".join(WATCHLIST.keys()) or "none"
         send_whatsapp(
             f"✅ *AlertApp Online*\nLast poll: {now}\n"
-            f"Tracking: {symbols}\n"
-            "Commands: STATUS | WATCHLIST | SUPPORT SYMBOL | SOLD | SEND"
+            f"Manual watchlist: {len(WATCHLIST)} symbols\n"
+            f"Rebuy watchlist:  {len(REBUY_WATCHLIST)} symbols "
+            f"(↓{REBUY_DROP_PCT}% trigger)\n"
+            "Commands: STATUS | WATCHLIST | REBUY | SUPPORT SYMBOL | SOLD | RELOAD"
         )
         print(f"[{now}] Replied to STATUS", flush=True)
 
     elif msg_text == "WATCHLIST":
-        lines = [f"  {sym}: ref=${cfg[0]:.2f}  ↑{cfg[1]}%  ↓{cfg[2]}%" for sym, cfg in WATCHLIST.items()]
-        send_whatsapp("📋 *Current watchlist:*\n" + "\n".join(lines))
+        if WATCHLIST:
+            lines = [
+                f"  {sym}: ref=${cfg[0]:.2f}  ↑{cfg[1]}%  ↓{cfg[2]}%"
+                for sym, cfg in WATCHLIST.items()
+            ]
+            send_whatsapp("📋 *Manual watchlist:*\n" + "\n".join(lines))
+        else:
+            send_whatsapp("📋 Manual watchlist is empty.")
         print(f"[{now}] Replied to WATCHLIST", flush=True)
+
+    elif msg_text == "REBUY":
+        if REBUY_WATCHLIST:
+            lines = [
+                f"  {sym}: sold avg=${price:.2f}  alert if ↓{REBUY_DROP_PCT}%  "
+                f"(≤${price * (1 - REBUY_DROP_PCT / 100):.2f})"
+                for sym, price in REBUY_WATCHLIST.items()
+            ]
+            send_whatsapp(
+                f"♻️ *Rebuy candidates ({len(REBUY_WATCHLIST)} symbols):*\n"
+                + "\n".join(lines)
+            )
+        else:
+            send_whatsapp(
+                "♻️ Rebuy watchlist is empty.\n"
+                "Make sure IBKR_BuySell_Since_2020.xlsx is up to date and has a "
+                "Completely_Sold sheet."
+            )
+        print(f"[{now}] Replied to REBUY", flush=True)
+
+    elif msg_text == "RELOAD":
+        msg = reload_watchlists()
+        send_whatsapp(msg)
+        print(f"[{now}] RELOAD: {msg.splitlines()[0]}", flush=True)
 
     elif msg_text in ("SOLD", "SEND"):
         print(f"[{now}] {msg_text} command; running run-alert.bat", flush=True)
@@ -319,12 +473,11 @@ def handle_command(msg_text: str, *, is_outgoing: bool) -> None:
                 send_whatsapp(f"❌ Could not find support levels for {symbol}.")
             print(f"[{now}] SUPPORT {symbol} → {levels}", flush=True)
 
-    # Never reply "unknown command" to outgoing messages: the listener's own
-    # replies are outgoing and would cause an endless reply loop.
+    # Never reply "unknown command" to outgoing messages (avoids reply loops).
     elif msg_text and not is_outgoing:
         send_whatsapp(
             "❓ Unknown command.\n"
-            "Try: *STATUS* | *WATCHLIST* | *SUPPORT AAPL* | *SOLD*"
+            "Try: *STATUS* | *WATCHLIST* | *REBUY* | *SUPPORT AAPL* | *SOLD* | *RELOAD*"
         )
         print(f"[{now}] Unknown command: {msg_text!r}", flush=True)
 
@@ -360,11 +513,16 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    print("[*] AlertApp started (price monitor + command listener).", flush=True)
+    print("[*] AlertApp started (price monitor + rebuy monitor + command listener).", flush=True)
     print(f"    Instance: {ID_INSTANCE}  Target: {TARGET_PHONE}", flush=True)
-    print(f"    Watchlist: {', '.join(WATCHLIST.keys())}", flush=True)
-    print(f"    Price check interval: {CHECK_INTERVAL}s  Poll: {POLL_SECONDS}s", flush=True)
-    print("    Commands: STATUS | WATCHLIST | SUPPORT SYMBOL | SOLD | SEND", flush=True)
+    print(f"    Manual watchlist:  {list(WATCHLIST.keys())}", flush=True)
+    print(
+        f"    Rebuy watchlist:   {list(REBUY_WATCHLIST.keys())} "
+        f"(alert ↓{REBUY_DROP_PCT}% below avg sell)",
+        flush=True,
+    )
+    print(f"    Price check: every {CHECK_INTERVAL}s  Command poll: every {POLL_SECONDS}s", flush=True)
+    print("    Commands: STATUS | WATCHLIST | REBUY | SUPPORT SYMBOL | SOLD | RELOAD", flush=True)
 
     heartbeat_url = _load_heartbeat_url()
     if heartbeat_url:
@@ -385,6 +543,7 @@ if __name__ == "__main__":
         now_mono = time.monotonic()
         if now_mono - last_stock_check >= CHECK_INTERVAL:
             monitor_stocks()
+            monitor_rebuy()
             last_stock_check = now_mono
 
         if heartbeat_url and (now_mono - last_heartbeat) >= HEARTBEAT_INTERVAL_SECONDS:

@@ -1,18 +1,40 @@
-; Copy to config.ini and edit. Do not commit config.ini if it contains secrets.
-; WhatsApp credentials: copy secrets.local.ini.example -> secrets.local.ini
+; AlertApp configuration template.
+; Copy this file to config.ini and edit.
+; Put WhatsApp credentials in secrets.local.ini (gitignored) — see secrets.local.ini.example.
 
+; ─────────────────────────────────────────────────────────────────
+; MANUAL WATCHLIST
+; Alerts when price moves >= up_pct ABOVE or >= down_pct BELOW ref_price.
+; ─────────────────────────────────────────────────────────────────
 [watchlist]
 ; symbol = reference_price, up_pct, down_pct
 AAPL = 230.00, 2.0, 2.0
 TSLA = 320.00, 5.0, 5.0
 
-[whatsapp]
-; Or set GREEN_API_ID_INSTANCE, GREEN_API_TOKEN, WHATSAPP_TARGET_PHONE env vars
-id_instance = YOUR_GREEN_API_ID_INSTANCE
-api_token = YOUR_GREEN_API_TOKEN
-target_phone = 1234567890
+; ─────────────────────────────────────────────────────────────────
+; REBUY WATCHLIST (auto-loaded from Completely_Sold sheet)
+; Monitors all completely-sold positions from the IBKR BuySell Excel.
+; Uses the weighted-average sell price as the reference.
+; Fires a "Rebuy Candidate" WhatsApp alert when current price drops
+; >= drop_pct below the average sell price — a potential re-entry signal.
+;
+; Send REBUY via WhatsApp to see the full list of monitored symbols.
+; Send RELOAD to refresh after you regenerate the Excel.
+; ─────────────────────────────────────────────────────────────────
+[rebuy]
+; Trigger threshold: alert when price <= avg_sell * (1 - drop_pct / 100)
+drop_pct = 5.0
 
-; Seconds between stock price checks
+; Optional: override the default workbook path
+; workbook_path = C:/Investment/reports/IBKR_BuySell_Since_2020.xlsx
+
+; Optional: comma-separated symbols to exclude (e.g. delisted tickers)
+; exclude_symbols = SKLZ, COUP, ATVI, ZNGA, SIVB
+
+; ─────────────────────────────────────────────────────────────────
+; WHATSAPP (non-secret settings only — put credentials in secrets.local.ini)
+; Or set env vars: GREEN_API_ID_INSTANCE, GREEN_API_TOKEN, WHATSAPP_TARGET_PHONE
+; ─────────────────────────────────────────────────────────────────
+[whatsapp]
 check_interval_seconds = 600
-; Seconds between incoming command polls
 command_poll_seconds = 2

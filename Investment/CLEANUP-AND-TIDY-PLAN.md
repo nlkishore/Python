@@ -39,6 +39,7 @@ Saved reference so later cleanup can proceed **one action at a time** without re
 |------|---------|
 | `shared\config_loader.py` | Merged INI + env overrides; UTF-8 BOM safe; `green_api_credentials()`, `flex_credentials()` |
 | `shared\alert_watchlist.py` | Load `[watchlist]` from AlertApp `config.ini` / `secrets.local.ini` |
+| `shared\sold_watchlist.py` | Load Completely_Sold symbols + avg sell price from BuySell Excel (rebuy monitor) |
 | `AutomatedTrading\indicators.py` | Shared `atr14()`, `targets_ok()`, `append_atr_ema_columns()` |
 
 **Secrets pattern (enforced):** live credentials in gitignored `secrets.local.ini` files; example templates committed; env vars override INI.
@@ -151,12 +152,13 @@ Pick one item per session. Mark `[~]` when started, `[x]` when done.
 ### B. Alerts
 - [ ] **Green API token expiry warning** — log expiry date on startup; warn N days before expiry
 - [x] **AlertApp-IBKR consolidation** — merged `SUPPORT`, `SOLD`, single-instance lock, heartbeat, watchdog into `AlertApp\backgroundAlert1.py`; `AlertApp-IBKR` archived (2026-08-19)
+- [x] **Rebuy candidate monitor** — `shared\sold_watchlist.py` reads Completely_Sold sheet; `backgroundAlert1.py` monitors all 17 active symbols; alerts when price drops ≥ 5% below avg sell price; `REBUY` and `RELOAD` WhatsApp commands added (2026-08-19)
 - [ ] **CompletelySoldAlert Windows Task Scheduler entry** — configure with correct venv path + working directory (see `CompletelySoldAlert\readme.txt`)
 
 ### C. Reporting
 - [ ] **Auto-run Symbol P&L after BuySell regenerate** — add `IBKR-SymbolPnL` as step 4 in `regenerate-ibkr-reports.bat`
 - [ ] **Fix pandas FutureWarning** — update `corporate_parse.py:316` concat call
-- [ ] **Delisted symbol registry** — small list of known-delisted tickers; suppress Yahoo errors and flag rows explicitly in Completely_Sold sheet
+- [x] **Delisted symbol registry** — `exclude_symbols = SKLZ, COUP, ATVI, ZNGA, SIVB` in `AlertApp/config.ini [rebuy]`; skipped in Yahoo fetches (2026-08-19)
 - [ ] **Seasonal report output path** — `seasonal_consistency_report.csv` writes to cwd; redirect to `reports\`
 
 ### D. Code quality
