@@ -12,8 +12,8 @@ Future reference for all investment automation under this folder: what each feat
 |--------|---------|
 | `reports\` | **Canonical IBKR Excel outputs** (Buy/Sell, TradeHistory, AccountStatement P1, Symbol P&L) — see `IBKR-REPORTS-GUIDE.md` |
 | `shared\` | **Shared helpers** — `config_loader.py` (merged INI + env, UTF-8 BOM safe), `alert_watchlist.py` (watchlist parser) |
-| `AlertApp\` | **Active alert** — Green API WhatsApp price alerts via `backgroundAlert1.py`; start with `start_stock_alert.bat`; `archive\` holds retired scripts |
-| `AlertApp-IBKR\` | IBKR + support-level alert prototype (not yet production-hardened) |
+| `AlertApp\` | **Active alert (consolidated)** — price threshold alerts + `STATUS` / `WATCHLIST` / `SUPPORT SYMBOL` / `SOLD` commands + single-instance lock + heartbeat + watchdog. Start: `start_stock_alert.bat` or `AlertApp\run-green-api-listener.bat`. Auto-start: `AlertApp\install-scheduled-tasks.bat`. |
+| `AlertApp-IBKR\` | **ARCHIVED** — scripts consolidated into `AlertApp\backgroundAlert1.py` (2026-08-19). See `AlertApp-IBKR\README.md`. |
 | `AutomatedTrading\` | EMA / ATR / chart heuristics; Yahoo or IBKR data; optional WhatsApp; shared `indicators.py` |
 | `IBKR-Client-GateWay\` | IBKR Client Portal REST gateway (port 5000) |
 | `IBKR-Transaction\` | IBKR CSV drop folder (`Latest\`) for Activity / TRANSACTIONS |
@@ -126,71 +126,83 @@ python stock_whatsapp_monitor.py --config my-config.ini
 
 ---
 
-## 2. AlertApp — Green API background alerts
+## 2. AlertApp — Green API stock monitor + command listener (consolidated)
 
 ### Feature
 
-Background loop: compares Yahoo prices to hardcoded reference levels; sends Green API WhatsApp on breach. `backgroundAlert1.py` also replies to incoming `STATUS` command.
+**Consolidated (2026-08-19)** — merges the old AlertApp price monitor and AlertApp-IBKR command listener into one script:
+
+- Polls Yahoo Finance every `check_interval_seconds` (default 600 s); sends WhatsApp alert on % threshold breach.
+- Polls Green API every `command_poll_seconds` (default 2 s) for commands:
+  - `STATUS` — confirm online; list tracked symbols
+  - `WATCHLIST` — show symbols with reference prices and thresholds
+  - `SUPPORT SYMBOL` — 3 recent pivot support levels (6-month Yahoo history)
+  - `SOLD` / `SEND` — trigger CompletelySoldAlert digest on demand
+- Reacts to both incoming and outgoing messages (trigger commands from your own phone).
+- Single-instance Windows mutex — prevents two listeners racing on the same Green API instance.
+- External heartbeat (dead-man's switch) — pings a URL every 5 min so healthchecks.io can alert you if the machine goes down.
+- Watchdog (`watchdog.py`) — restarts the listener if it crashes; driven by Task Scheduler.
 
 ### Programs
 
 | File | Purpose |
 |------|---------|
-| `backgroundAlert1.py` | **Active** — used by `start_stock_alert.bat` |
-| `backgroundAlert.py` | Simpler 10-minute monitor loop |
-| `personalInvestAlert.py` | Browser-based via `pywhatkit` (opens WhatsApp Web) |
+| `backgroundAlert1.py` | **Active consolidated script** |
+| `watchdog.py` | Auto-restart watchdog (used by Task Scheduler) |
+| `run-green-api-listener.bat` | Start listener in foreground |
+| `install-scheduled-tasks.bat` | Install auto-start + watchdog Task Scheduler jobs |
+| `uninstall-scheduled-tasks.bat` | Remove those jobs |
+| `archive\backgroundAlert.py` | Retired (simpler price-only monitor) |
+| `archive\personalInvestAlert.py` | Retired (browser-based `pywhatkit`) |
 
 ### Configuration
 
-**No `config.ini`** — edit constants inside each script:
+| File | Section | Keys |
+|------|---------|------|
+| `config.ini` | `[watchlist]` | `SYMBOL = ref_price, up_pct, down_pct` |
+| `config.ini` | `[whatsapp]` | `check_interval_seconds`, `command_poll_seconds` |
+| `secrets.local.ini` | `[whatsapp]` | `id_instance`, `api_token`, `target_phone` (gitignored) |
+| `heartbeat_url.txt` | — | Paste healthchecks.io ping URL (optional, gitignored) |
 
-- `ID_INSTANCE`, `API_TOKEN_INSTANCE`, `TARGET_PHONE` (Green API)
-- `WATCHLIST` dict: `{symbol: [ref_price, up_%, down_%]}`
+Copy templates: `config.ini.example`, `secrets.local.ini.example`.
+
+Green API account: https://green-api.com/ — link your WhatsApp device in the console.
 
 ### Dependencies
 
 ```cmd
-pip install whatsapp-api-client-python yfinance
+pip install -r AlertApp\requirements.txt
 ```
-
-Green API account: https://green-api.com/ (link WhatsApp device in console).
+(`whatsapp-api-client-python`, `yfinance`)
 
 ### How to run
 
 ```cmd
-cd C:\Investment
-start_stock_alert.bat
+C:\Investment\start_stock_alert.bat        REM start
+C:\Investment\stop_stock_alert.bat         REM stop
 ```
 
-Or directly:
-
+Or from the AlertApp folder directly:
 ```cmd
-python AlertApp\backgroundAlert1.py
+cd C:\Investment\AlertApp
+run-green-api-listener.bat
+```
+
+Auto-start on reboot + self-healing watchdog (one-time setup):
+```cmd
+cd C:\Investment\AlertApp
+install-scheduled-tasks.bat
 ```
 
 ### Docs
 
-- `AlertApp\readme.txt` (Green API setup, optional Windows service via NSSM)
+- `AlertApp\readme.txt` — full credential guide, watchdog, heartbeat, single-instance notes
 
 ---
 
-## 3. AlertApp-IBKR — Prototype
+## 3. AlertApp-IBKR — ARCHIVED (2026-08-19)
 
-### Feature
-
-Experimental: support-level calculation from 6-month Yahoo history + Green API command listener.
-
-### Program
-
-- `AlertApp-IBKR\backgroundAlert.py`
-
-### Configuration
-
-Placeholder credentials (`YOUR_ID_INSTANCE`, etc.) — **must be filled in before use**.
-
-### Status
-
-Prototype only; prefer `AutomatedTrading` IBKR scripts for production-style workflows.
+All features consolidated into `AlertApp\backgroundAlert1.py`. See `AlertApp-IBKR\README.md`.
 
 ---
 

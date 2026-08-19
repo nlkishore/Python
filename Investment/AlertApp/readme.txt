@@ -1,157 +1,149 @@
-PythonPath : C:\Users\nlaxm\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\python.exe
-scriptPath:C:\Investment\AlertApp\backgroundAlert.py
+================================================================================
+  AlertApp — Green API WhatsApp Stock Monitor + Command Listener
+================================================================================
 
+Folder:  C:\Investment\AlertApp
+Script:  backgroundAlert1.py
+Updated: 2026-08-19 (consolidated from AlertApp + AlertApp-IBKR)
 
+WHAT IT DOES
+------------
+Two jobs in one process:
 
-The **Green API** is the ideal "background" choice because it operates via a cloud-based gateway. Unlike the previous method, this script does not need to open a browser window or keep a WhatsApp Web tab active; it sends messages directly through the Green API servers.
+1. Price monitor
+   Polls Yahoo Finance every CHECK_INTERVAL seconds (default 600s = 10 min).
+   Sends a WhatsApp alert when a watchlist symbol moves beyond its configured
+   up/down threshold.
 
-### 1. Setup (Free Tier)
-To use this, you need a free developer account:
-1.  Go to [Green-API.com](https://green-api.com/) and create a free **"Developer"** instance.
-2.  Scan the QR code in the Green API console using your phone's WhatsApp (Linked Devices).
-3.  Copy your **ID_INSTANCE** and **API_TOKEN_INSTANCE**.
+2. Command listener
+   Polls Green API every POLL_SECONDS (default 2s) for incoming WhatsApp
+   messages. Responds to:
 
-### 2. The Python Script
-You will need to install the Green API SDK and `yfinance`:
-```bash
-pip install whatsapp-api-client-python yfinance
-```
+     STATUS              — confirm listener is online + list tracked symbols
+     WATCHLIST           — show all symbols with reference prices and thresholds
+     SUPPORT AAPL        — 3 recent pivot support levels (6-month Yahoo history)
+     SOLD  or  SEND      — run C:\Investment\CompletelySoldAlert\run-alert.bat
+                           (sends the Completely Sold price digest to WhatsApp)
 
-```python
-import yfinance as yf
-from whatsapp_api_client_python import API
-import time
+   The listener reacts to BOTH incoming messages AND your own OUTGOING messages
+   (sent from the linked phone or the Green API web console). It never replies
+   "unknown command" to outgoing messages (avoids reply loops).
 
-# --- Configuration ---
-ID_INSTANCE = "YOUR_ID_INSTANCE_HERE"
-API_TOKEN_INSTANCE = "YOUR_API_TOKEN_HERE"
-TARGET_PHONE = "1234567890"  # Your number with country code, NO '+' sign
+EXTRAS
+------
+- Single-instance mutex (Windows): prevents two listeners racing on the same
+  Green API instance (race causes 502 RMQ_ERROR / dropped commands).
 
-# Symbols: [Reference_Price, Up_%, Down_%]
-WATCHLIST = {
-    "AAPL": [180.00, 2.0, 2.0],
-    "TSLA": [200.00, 5.0, 5.0]
-}
+- External heartbeat (dead-man's switch): listener pings a URL every 5 min
+  so an external service (e.g. healthchecks.io) alerts your phone if the whole
+  machine goes down. Configure via ONE of:
+    - heartbeat_url.txt  (paste the ping URL, nothing else)
+    - Env var: LISTENER_HEARTBEAT_URL
+    - config.ini [monitoring] heartbeat_url = <url>
 
-# Initialize Green API
-greenAPI = API.GreenAPI(ID_INSTANCE, API_TOKEN_INSTANCE)
+- Watchdog (watchdog.py): checks the mutex and restarts the listener if it died.
+  Used by the Task Scheduler jobs (see AUTO-START below).
 
-def send_whatsapp(text):
-    # Green API format for individual chat is 'number@c.us'
-    chat_id = f"{TARGET_PHONE}@c.us"
-    response = greenAPI.sending.sendMessage(chat_id, text)
-    if response.code == 200:
-        print("✅ Alert sent successfully!")
-    else:
-        print(f"❌ Failed to send: {response.error}")
+--------------------------------------------------------------------------------
+CREDENTIALS (pick any — env vars override INI)
+--------------------------------------------------------------------------------
 
-def monitor_stocks():
-    print("Checking prices...")
-    for symbol, config in WATCHLIST.items():
-        ref_price, up_pct, down_pct = config
-        
-        # Fetch data
-        ticker = yf.Ticker(symbol)
-        data = ticker.history(period="1d")
-        if data.empty: continue
-        
-        current_price = data['Close'].iloc[-1]
-        change = ((current_price - ref_price) / ref_price) * 100
-        
-        print(f"{symbol}: ${current_price:.2f} ({change:+.2f}%)")
+  1. Environment variables:
+       GREEN_API_ID_INSTANCE
+       GREEN_API_TOKEN
+       WHATSAPP_TARGET_PHONE   (no + sign)
 
-        if change >= up_pct:
-            msg = f"🚀 *STOCK UP ALERT*\n{symbol} is at ${current_price:.2f}\nChange: {change:.2f}%"
-            send_whatsapp(msg)
-        elif change <= -down_pct:
-            msg = f"📉 *STOCK DOWN ALERT*\n{symbol} is at ${current_price:.2f}\nChange: {change:.2f}%"
-            send_whatsapp(msg)
+  2. secrets.local.ini  (gitignored — copy from secrets.local.ini.example)
+       [whatsapp]
+       id_instance = YOUR_ID
+       api_token   = YOUR_TOKEN
+       target_phone = 1234567890
 
-# Run loop every 10 minutes
-if __name__ == "__main__":
-    while True:
-        try:
-            monitor_stocks()
-        except Exception as e:
-            print(f"Error: {e}")
-        time.sleep(600) 
-```
+  3. config.ini [whatsapp]  (same keys — use for non-secret settings only)
 
----
+--------------------------------------------------------------------------------
+WATCHLIST
+--------------------------------------------------------------------------------
 
-### Why this is better for your use case:
-* **Headless:** You can run this script on a cheap cloud VPS, a Raspberry Pi, or just leave it running in the background of your PC without any windows popping up.
-* **Stability:** Since it doesn't rely on browser automation (DOM elements), it won't break if WhatsApp updates its website layout.
-* **Formatting:** You can use WhatsApp Markdown (like `*bold*` or `_italics_`) easily in the string.
+  Edit config.ini [watchlist]:
 
-### Important Note on the Free Tier:
-The Green API "Developer" (Free) plan allows you to send messages to up to **3 specific contacts**. Since you are only sending alerts to your own personal number, this fits perfectly within the free limits.
+    [watchlist]
+    AAPL = 230.00, 2.0, 2.0    ; ref_price, up_%, down_%
+    TSLA = 320.00, 5.0, 5.0
 
-**Would you like me to show you how to wrap this script as a Windows Service or a Linux Cron Job so it starts automatically when your computer turns on?**
+  Send WATCHLIST via WhatsApp to confirm what the running monitor sees.
 
+--------------------------------------------------------------------------------
+HOW TO RUN
+--------------------------------------------------------------------------------
 
-To wrap a Python script as a Windows Service, the most reliable way is using a utility called **NSSM (Non-Sucking Service Manager)**. While there are Python libraries like `pywin32` for this, they are notoriously difficult to debug. NSSM is the industry standard for turning any `.exe` or script into a background service.
+  Manual / foreground:
+    cd C:\Investment\AlertApp
+    python backgroundAlert1.py
 
-### 1. Prerequisites
-1.  **Download NSSM:** Get it from [nssm.cc](https://nssm.cc/download).
-2.  **Extract:** Copy `nssm.exe` (the one in the `win64` folder) to a permanent folder, e.g., `C:\tools\nssm.exe`.
-3.  **Refine your Script:** Ensure your script uses **absolute paths** for any files it reads/writes, as Services run in the `System32` directory by default.
+  Via bat shortcut (same folder):
+    run-green-api-listener.bat
 
----
+  Via root launchers:
+    C:\Investment\start_stock_alert.bat   <- start
+    C:\Investment\stop_stock_alert.bat    <- stop (targets backgroundAlert1.py only)
 
-### 2. Preparing the Python Executable
-Since a service needs a stable environment, identify your Python path and script path:
-* **Python Path:** Usually `C:\Users\<YourUser>\AppData\Local\Programs\Python\Python311\python.exe`
-* **Script Path:** Wherever you saved your Green API script, e.g., `C:\Scripts\stock_alert.py`
+  Dependencies:
+    pip install yfinance whatsapp-api-client-python
 
----
+--------------------------------------------------------------------------------
+AUTO-START ON REBOOT + SELF-HEALING WATCHDOG
+--------------------------------------------------------------------------------
 
-### 3. Creating the Service
-1.  Open **Command Prompt** or **PowerShell** as **Administrator**.
-2.  Navigate to the folder where you placed `nssm.exe`.
-3.  Run the following command:
-    ```cmd
-    nssm install StockAlertService
-    ```
-4.  A GUI window will pop up. Fill it out as follows:
+  One-time install (creates Windows Task Scheduler jobs):
 
-| Field | Value |
-| :--- | :--- |
-| **Path** | Browse to your `python.exe` |
-| **Startup directory** | Browse to the folder containing your script |
-| **Arguments** | `C:\Scripts\stock_alert.py` (The full path to your script) |
+    Double-click, or run from CMD:
+      install-scheduled-tasks.bat
 
-5.  Go to the **Details** tab and set the **Display name** (e.g., "Python Stock Alert").
-6.  Go to the **Exit Actions** tab and ensure "Restart" is selected so the service recovers if it crashes.
-7.  Click **Install service**.
+  Creates two jobs (run only when you are logged on):
+    AlertApp-Startup    -> runs watchdog.py at logon  (instant start)
+    AlertApp-Watchdog   -> runs watchdog.py every 5 minutes
 
----
+  watchdog.py:
+    - Checks if the listener is running (via its single-instance mutex).
+    - If DOWN: starts it detached (output appended to listener.log) and sends
+      a WhatsApp message: "listener was DOWN and has been restarted".
+    - If UP: does nothing.
 
-### 4. Managing the Service
-You can now treat this like any other Windows background process:
+  Remove the tasks:
+    uninstall-scheduled-tasks.bat
 
-* **Start it:** `nssm start StockAlertService` (or use the Windows **Services.msc** app).
-* **Check Status:** `nssm status StockAlertService`.
-* **Edit Settings:** `nssm edit StockAlertService`.
-* **Remove it:** `nssm remove StockAlertService confirm`.
+  Check tasks:
+    schtasks /Query /TN "AlertApp-Watchdog"
+    schtasks /Query /TN "AlertApp-Startup"
 
----
+  Note: tasks run only while you are logged on (per-user Python install).
+  For background-without-login, install system-wide Python and recreate with
+  "Run whether user is logged on or not".
 
-### 5. Essential Logging (Highly Recommended)
-Because Services run in the background, you won't see "Print" statements. You should tell NSSM to capture your script's output to a file so you can troubleshoot:
+--------------------------------------------------------------------------------
+SINGLE INSTANCE GUARD
+--------------------------------------------------------------------------------
 
-1.  Run `nssm edit StockAlertService`.
-2.  Go to the **I/O** tab.
-3.  Set **Output (stdout)** and **Error (stderr)** to a log file path, e.g., `C:\Scripts\log.txt`.
+  Green API allows only ONE active receiveNotification consumer per instance.
+  Running two listeners causes 502 RMQ_ERROR and dropped / delayed commands.
 
----
+  This listener holds a Windows named mutex. If you start a second copy it
+  prints "[X] Another AlertApp listener is already running." and exits.
 
-### Why this is better for your Green API script:
-* **Auto-Start:** The alerts will start monitoring as soon as you boot Windows, even before you log in.
-* **Background:** No command prompt windows will be sitting on your taskbar.
-* **Self-Healing:** If your internet drops and the script crashes, Windows will automatically restart it.
+  Check what is running:
+    Get-CimInstance Win32_Process |
+      Where-Object { $_.Name -like 'python*' -and
+                     $_.CommandLine -match 'backgroundAlert1' } |
+      Select-Object ProcessId, CreationDate
 
-**Would you like me to add a small logging block to your Python script so it records exactly when it sends an alert to that log file?**
+--------------------------------------------------------------------------------
+ARCHIVE
+--------------------------------------------------------------------------------
 
+  The original AlertApp-IBKR scripts (command-only listener) and the old
+  backgroundAlert.py / personalInvestAlert.py are kept in their respective
+  archive\ folders for reference. Do NOT run them alongside this script.
+  See AlertApp-IBKR\README.md for the full merge history.
 
-https://console.green-api.com/instanceList
+================================================================================

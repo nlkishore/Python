@@ -16,8 +16,8 @@ Saved reference so later cleanup can proceed **one action at a time** without re
 | Area | What it does | Key paths |
 |------|----------------|-----------|
 | Root price monitor | Yahoo Finance % threshold alerts via CallMeBot or Twilio | `stock_whatsapp_monitor.py`, `config.ini` |
-| AlertApp | Green API WhatsApp threshold alerts; `STATUS` command | `AlertApp\backgroundAlert1.py` (active via `start_stock_alert.bat`) |
-| AlertApp-IBKR | WhatsApp command listener (`STATUS` / `SUPPORT` / `SOLD`); prototype-style | `AlertApp-IBKR\backgroundAlert.py` |
+| AlertApp | **Consolidated** Green API monitor: price threshold alerts + `STATUS` / `WATCHLIST` / `SUPPORT SYMBOL` / `SOLD` commands + single-instance lock + heartbeat + watchdog | `AlertApp\backgroundAlert1.py` (active via `start_stock_alert.bat`) |
+| AlertApp-IBKR | **ARCHIVED** (2026-08-19) — scripts moved to `AlertApp-IBKR\archive\`; see `AlertApp-IBKR\README.md` | `AlertApp-IBKR\README.md` |
 | AutomatedTrading | EMA / ATR / volume / chart S-R heuristics; Yahoo or IBKR data; optional WhatsApp | `AutomatedTrading\` |
 | IBKR Client Portal Gateway | Local HTTPS REST bridge (port 5000) | `IBKR-Client-GateWay\` |
 | IBKR Flex Buy/Sell | Flex download, Activity merge, Completely_Sold / Still_Holding Excel | `IBKR-Flex-BuySell\` → `reports\IBKR_BuySell_Since_2020.xlsx` |
@@ -150,7 +150,7 @@ Pick one item per session. Mark `[~]` when started, `[x]` when done.
 
 ### B. Alerts
 - [ ] **Green API token expiry warning** — log expiry date on startup; warn N days before expiry
-- [ ] **AlertApp-IBKR production hardening** — add config-driven credentials; test `SUPPORT` / `SOLD` commands end-to-end
+- [x] **AlertApp-IBKR consolidation** — merged `SUPPORT`, `SOLD`, single-instance lock, heartbeat, watchdog into `AlertApp\backgroundAlert1.py`; `AlertApp-IBKR` archived (2026-08-19)
 - [ ] **CompletelySoldAlert Windows Task Scheduler entry** — configure with correct venv path + working directory (see `CompletelySoldAlert\readme.txt`)
 
 ### C. Reporting
