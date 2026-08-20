@@ -2,7 +2,9 @@
 
 Future reference for all investment automation under this folder: what each feature does, how to run it, and what to configure first.
 
-**Last reviewed:** 2026-08-19 (Phase 1 cleanup complete — secrets rotated, shared modules added, alert path consolidated, dependencies documented)
+**Last reviewed:** 2026-08-20  
+
+**Quick run book (2-line summary + switches for every executable):** [`EXECUTABLES-SUMMARY.md`](EXECUTABLES-SUMMARY.md)
 
 ---
 

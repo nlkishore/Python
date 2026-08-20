@@ -4,6 +4,8 @@
 
 **Full folder reference (all programs):** see [`INVESTMENT-PROGRAMS-REFERENCE.md`](INVESTMENT-PROGRAMS-REFERENCE.md)
 
+**Quick executables cheat sheet (2-line summary + switches):** see [`EXECUTABLES-SUMMARY.md`](EXECUTABLES-SUMMARY.md)
+
 **Cleanup / tidy backlog (do one item at a time):** see [`CLEANUP-AND-TIDY-PLAN.md`](CLEANUP-AND-TIDY-PLAN.md)
 
 Python tool to watch Yahoo Finance symbols against up/down percentage thresholds and send alerts to WhatsApp (CallMeBot or Twilio). Configuration is in `config.ini` (copy from `config.ini.example` or `config.ini.example-fixed-ref`).

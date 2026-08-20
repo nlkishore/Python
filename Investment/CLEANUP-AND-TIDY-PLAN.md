@@ -5,7 +5,7 @@ Saved reference so later cleanup can proceed **one action at a time** without re
 **Last updated:** 2026-08-19  
 **Status:** Phase 1 (secrets, alerts, config, shared code, artifacts) — COMPLETE. Phase 2 (future enhancements) — see backlog below.  
 **Source reviews:** feature inventory + duplication audit of `C:\Investment`  
-**Related docs:** [`INVESTMENT-PROGRAMS-REFERENCE.md`](INVESTMENT-PROGRAMS-REFERENCE.md), [`IBKR-REPORTS-GUIDE.md`](IBKR-REPORTS-GUIDE.md), [`README.md`](README.md)
+**Related docs:** [`EXECUTABLES-SUMMARY.md`](EXECUTABLES-SUMMARY.md), [`INVESTMENT-PROGRAMS-REFERENCE.md`](INVESTMENT-PROGRAMS-REFERENCE.md), [`IBKR-REPORTS-GUIDE.md`](IBKR-REPORTS-GUIDE.md), [`README.md`](README.md)
 
 **How to use (Phase 2):** pick the next unchecked item from the backlog below, implement only that item, mark it done, stop. Do not restart planning unless requirements change.
 
