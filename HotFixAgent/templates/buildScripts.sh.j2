@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# HotFix build script — variables are maintained by hotfix-prep.
+# Existing HotFix CI should source or read these exports.
+
+set -euo pipefail
+
+export HF_NUMBER={{HF_NUMBER}}
+export TARGET_BRANCH={{TARGET_BRANCH}}
+export MARKET={{MARKET}}
+export PR_ID={{PR_ID}}
+export RELEASE_COMMIT={{RELEASE_COMMIT}}
+export FILE_LIST_NAME={{FILE_LIST_NAME}}
+
+# Placeholder: replace with the market HotFix packager that reads FILE_LIST_NAME
+# from the latest full release binary and writes an incremental zip.
+echo "HotFix ${HF_NUMBER} market=${MARKET} pr=${PR_ID} branch=${TARGET_BRANCH} commit=${RELEASE_COMMIT}"

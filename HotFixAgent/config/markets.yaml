@@ -1,0 +1,74 @@
+# P0 defaults — replace ids, branches, and repo keys with real market values.
+# Only PRs merged into a listed release_branch are processed.
+
+defaults:
+  files_list_name: filesList.txt
+  build_scripts_name: buildScripts.sh
+  skip_globs:
+    - "**/src/test/**"
+    - "**/*Test.java"
+    - "**/*Tests.java"
+    - "**/*.md"
+    - "**/pom.xml"
+    - "**/.gitignore"
+    - "**/.gitattributes"
+    - "**/README*"
+  java_roots:
+    - src/main/java
+  resource_roots:
+    - src/main/resources
+  webapp_roots:
+    - src/main/webapp
+  class_prefix: WEB-INF/classes
+  skip_deleted: true
+
+markets:
+  - id: SG
+    release_branches:
+      - release/sg
+    hotfix_branch: hotfix/sg
+    repo:
+      project: BANK
+      slug: core-app
+  - id: IN
+    release_branches:
+      - release/in
+    hotfix_branch: hotfix/in
+    repo:
+      project: BANK
+      slug: core-app
+  - id: HK
+    release_branches:
+      - release/hk
+    hotfix_branch: hotfix/hk
+    repo:
+      project: BANK
+      slug: core-app
+  - id: MY
+    release_branches:
+      - release/my
+    hotfix_branch: hotfix/my
+    repo:
+      project: BANK
+      slug: core-app
+  - id: TH
+    release_branches:
+      - release/th
+    hotfix_branch: hotfix/th
+    repo:
+      project: BANK
+      slug: core-app
+  - id: ID
+    release_branches:
+      - release/id
+    hotfix_branch: hotfix/id
+    repo:
+      project: BANK
+      slug: core-app
+  - id: VN
+    release_branches:
+      - release/vn
+    hotfix_branch: hotfix/vn
+    repo:
+      project: BANK
+      slug: core-app
