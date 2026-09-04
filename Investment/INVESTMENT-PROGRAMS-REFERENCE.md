@@ -22,6 +22,8 @@ Future reference for all investment automation under this folder: what each feat
 | `IBKR-Download\` | Account Statement CSVs + P1 report generator |
 | `IBKR-Flex-BuySell\` | Flex download, Buy/Sell + trade_history tools |
 | `IBKR-SymbolPnL\` | **Canonical** per-symbol P&L — `symbol_pnl_from_buysell.py` → `reports\IBKR_Symbol_PnL_From_BuySell.xlsx` |
+| `IBKR-BatchPnL\` | FIFO avg buy/sell + lot-matched batch P&L → `reports\IBKR_Batch_PnL.xlsx` |
+| `IBKR-SymbolDetail\` | Per-symbol buys/sells/corp actions, last price, realized & unrealized P&L → `reports\IBKR_Symbol_Detail.xlsx` |
 | `ListTop5SectorwiseStocks\` | Top 5 ETF holdings by sector |
 | `SeasonalStocks\` | Seasonal peak/trough month analysis (IBKR history) |
 | `examples\` | Debug / one-off scripts (e.g. `ema_single_ticker_test.py`) — not part of main workflow |
@@ -452,6 +454,29 @@ python ibkr_to_excel.py
 python ibkr_to_excel.py --input "C:\path\to\TRANSACTIONS.csv"
 python ibkr_to_excel.py --discover --dir C:\Investment\IBKR-Transaction
 ```
+
+---
+
+## 8a. IBKR-BatchPnL — FIFO averages and batch P&L
+
+### Feature
+
+Sells with **no matching buy lot** are booked as realized **LOSS**.
+
+Default run refreshes Buy/Sell from IBKR Flex through **today**, then writes `reports\IBKR_Batch_PnL.xlsx`.
+
+### How to run
+
+```cmd
+cd C:\Investment\IBKR-BatchPnL
+python batch_pnl_report.py --no-market-prices
+```
+
+Output: `C:\Investment\reports\IBKR_Batch_PnL.xlsx`
+
+### Docs
+
+- `IBKR-BatchPnL\README.md`
 
 ---
 

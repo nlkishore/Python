@@ -123,6 +123,22 @@ Parses Account Statement CSVs into P1 Excel (deposits, trades, dividends, **with
 
 ---
 
+## IBKR-BatchPnL\
+
+### `run-batch-pnl.bat` → `batch_pnl_report.py`
+Refreshes Buy/Sell from IBKR Flex through **today**, then writes per-symbol avg buy/sell + FIFO batch P&L. Unmatched sells are booked as LOSS.  
+**Run:** `run-batch-pnl.bat` · `--no-market-prices` · `--skip-refresh` · `--offline` · `--to-date YYYYMMDD` · `--input PATH` · `--output PATH`
+
+---
+
+## IBKR-SymbolDetail\
+
+### `run-symbol-detail.bat` → `symbol_detail_report.py`
+Per-symbol buys, sells, corporate actions, Yahoo last traded price, realized and unrealized P&L.  
+**Run:** `run-symbol-detail.bat` · `--symbol NVDA` · `--symbols AAPL,AMZN` · `--no-market-prices`
+
+---
+
 ## IBKR-Transaction\
 
 ### `ibkr_to_excel.py`
@@ -173,6 +189,7 @@ Debug helper: prints 52-EMA / targets for one ticker via `averagePriceFetcher` h
 | Download Flex + rebuild Buy/Sell | `cd IBKR-Flex-BuySell` → `run-report.bat --download` |
 | Sync YTD into Buy/Sell cache | `python flex_buysell_report.py --sync-ytd` |
 | Symbol P&L workbook | `cd IBKR-SymbolPnL` → `run-symbol-pnl.bat` |
+| FIFO batch P&L (avg buy/sell + lot matches) | `cd IBKR-BatchPnL` → `run-batch-pnl.bat --no-market-prices` |
 | Completely sold digest (dry) | `cd CompletelySoldAlert` → `run-alert.bat run --dry-run --force-market-day` |
 | Live IBKR quotes → WhatsApp | `cd AutomatedTrading` → `python ClientPortalMarketSnapshot.py --send-whatsapp` |
 | Chart S/R → WhatsApp | `python ChartSupportResistanceWhatsApp_IBKR.py --send-whatsapp` |

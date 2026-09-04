@@ -8,6 +8,8 @@
 | `IBKR_Symbol_PnL_From_BuySell.xlsx` | **Canonical dedicated** per-symbol PROFIT / LOSS (run `IBKR-SymbolPnL\symbol_pnl_from_buysell.py`) | Buys+Sells from BuySell workbook |
 | `IBKR_TradeHistory.xlsx` | Full trade history; includes Symbol_PnL sheet from durable store | Flex + Activity + store |
 | `IBKR_AccountStatement_P1.xlsx` | Deposits, trades, dividends, **withholding tax**, interest | Account Statement CSVs |
+| `IBKR_Batch_PnL.xlsx` | Avg buy/sell + FIFO batch P&L (lot-matched) | Buys+Sells; run `IBKR-BatchPnL\batch_pnl_report.py` |
+| `IBKR_Symbol_Detail.xlsx` | Per-symbol buys/sells/corp, last price, realized/unrealized P&L | `IBKR-SymbolDetail\symbol_detail_report.py` |
 | `Completely_Sold_Support_Resistance.xlsx` | Optional S/R levels for closed symbols | Buy/Sell Completely_Sold sheet |
 
 Do **not** keep copies under `IBKR-Flex-BuySell\reports\`, `IBKR-Download\reports\`, or `CompletelySoldAlert\data\` (those folders only hold `_archive` or pointers).
@@ -117,6 +119,7 @@ Outputs always land in `C:\Investment\reports\`.
 | Need | Open |
 |------|------|
 | Completely sold P&L / still holding | `IBKR_BuySell_Since_2020.xlsx` |
+| Per-symbol buys/sells/corp + last price + P&L | `IBKR_Symbol_Detail.xlsx` |
 | Symbol P&L, dividends, tax rows over time | `IBKR_TradeHistory.xlsx` |
 | Withholding tax total / by symbol | `IBKR_AccountStatement_P1.xlsx` → sheets `Withholding_*` |
 | WhatsApp Completely Sold alert | Uses `reports\IBKR_BuySell_Since_2020.xlsx` automatically |

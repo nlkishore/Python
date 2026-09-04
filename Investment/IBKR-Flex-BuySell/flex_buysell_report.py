@@ -647,9 +647,16 @@ def main() -> int:
     )
     ap.add_argument("--output", type=Path, default=None, help="Override output .xlsx path")
     ap.add_argument("--start-year", type=int, default=None, help="Override start year (default 2020)")
+    ap.add_argument(
+        "--to-date",
+        default=None,
+        help="Override Flex/YTD end date as YYYYMMDD or YYYY-MM-DD (default: config.ini to_date, else today)",
+    )
     args = ap.parse_args()
 
     cfg = load_config(args.config, required_for_download=args.download)
+    if args.to_date:
+        cfg["to_date"] = str(args.to_date).replace("-", "").strip()
     start_year = args.start_year if args.start_year is not None else cfg["start_year"]
     output = args.output.resolve() if args.output else cfg["report_path"].resolve()
     fetch_prices = not args.no_market_prices
@@ -725,7 +732,7 @@ def main() -> int:
         print_compare_result(compare_ytd_trades(manual, auto, year=y))
 
     if args.sync_ytd and not args.download and not args.from_downloads and not args.fill_missing_from_activity:
-        _sync_ytd_step(try_flex=not args.force_download, force_flex=args.force_download)
+        _sync_ytd_step(try_flex=True, force_flex=args.force_download)
         if args.compare_baseline or cfg.get("ytd_baseline"):
             _compare_ytd_baseline(args.compare_baseline)
         try:

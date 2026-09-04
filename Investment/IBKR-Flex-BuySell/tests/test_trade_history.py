@@ -171,6 +171,96 @@ def test_symbol_pnl_split_fixes_open_qty():
     assert abs(float(row["Realized_PnL"]) - (200 - 100)) < 0.02  # sold 20 of 120 @ avg $5
 
 
+def test_symbol_pnl_reverse_split_does_not_wipe_cost():
+    """SKLZ-style 1-for-20: IBKR posts -275 then +13.75. Cost must survive the overshoot."""
+    trades = pd.DataFrame(
+        [
+            {
+                "Date": "2021-01-01",
+                "Symbol": "SKLZ",
+                "Transaction Type": "Buy",
+                "Quantity": 275,
+                "Price": 8.0,
+                "Commission": 0.0,
+                "Net Amount": -2200.0,
+                "Gross Amount": -2200.0,
+                "Account": "",
+                "Description": "SKLZ",
+            },
+            {
+                "Date": "2023-06-23",
+                "Symbol": "SKLZ",
+                "Transaction Type": "Sell",
+                "Quantity": 0.75,
+                "Price": 9.42,
+                "Commission": 0.0,
+                "Net Amount": 7.065,
+                "Gross Amount": 7.065,
+                "Account": "",
+                "Description": "SKLZ",
+            },
+            {
+                "Date": "2024-10-18",
+                "Symbol": "SKLZ",
+                "Transaction Type": "Sell",
+                "Quantity": 26,
+                "Price": 5.48,
+                "Commission": 0.0,
+                "Net Amount": 142.48,
+                "Gross Amount": 142.48,
+                "Account": "",
+                "Description": "SKLZ",
+            },
+            {
+                "Date": "2025-08-12",
+                "Symbol": "SKLZ",
+                "Transaction Type": "Buy",
+                "Quantity": 13,
+                "Price": 8.0,
+                "Commission": 0.0,
+                "Net Amount": -104.0,
+                "Gross Amount": -104.0,
+                "Account": "",
+                "Description": "SKLZ",
+            },
+        ]
+    )
+    corp = pd.DataFrame(
+        [
+            {
+                "Date": "2023-06-26",
+                "Symbol": "SKLZ",
+                "ActionType": "SPLIT",
+                "Quantity": -275,
+                "Amount": 0.0,
+                "Description": "SKLZ(US83067L1098) Split 1 for 20",
+                "Account": "",
+                "Source": "test",
+                "SourceFile": "t.csv",
+            },
+            {
+                "Date": "2023-06-26",
+                "Symbol": "SKLZ",
+                "ActionType": "SPLIT",
+                "Quantity": 13.75,
+                "Amount": 0.0,
+                "Description": "SKLZ(US83067L2088) Split 1 for 20",
+                "Account": "",
+                "Source": "test",
+                "SourceFile": "t.csv",
+            },
+        ]
+    )
+    pnl = build_symbol_pnl(trades, corp, fetch_marks=False)
+    row = pnl.iloc[0]
+    # Remaining after 0.75 sell: 274.25 → ~13.71 post-split; sell 26 oversells.
+    # Realized must be a large loss (proceeds << original cost), not a small profit.
+    assert float(row["Realized_PnL"]) < -1000
+    closed = completely_sold_from_symbol_pnl(pnl, trades)
+    if not closed.empty:
+        assert float(closed.iloc[0]["Profit"]) < 0
+
+
 def test_merge_trades_dedupes():
     a = pd.DataFrame(
         [

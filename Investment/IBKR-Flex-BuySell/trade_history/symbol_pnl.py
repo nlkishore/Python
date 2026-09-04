@@ -79,11 +79,16 @@ class _Position:
             self.last_sell = dt
 
     def apply_split_qty(self, delta_qty: float, note: str) -> None:
-        """IBKR reports share delta for splits (e.g. +114 on 20:1). Cost unchanged."""
+        """IBKR reports share delta for splits (e.g. +114 on 20:1). Cost unchanged.
+
+        Reverse splits often arrive as two rows (retire old shares, credit new).
+        The first delta can overshoot held qty by a fraction of a share; that must
+        NOT wipe cost — otherwise the new shares look free and sells look like profit.
+        Zero basis only when the position is truly flat.
+        """
         self.qty += float(delta_qty)
-        if self.qty < 0 and abs(self.qty) < 1e-8:
+        if abs(self.qty) < 1e-8:
             self.qty = 0.0
-        if self.qty <= 1e-9:
             self.cost = 0.0
         self.corp_notes.append(note)
 

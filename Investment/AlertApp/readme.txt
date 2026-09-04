@@ -21,9 +21,15 @@ Two jobs in one process:
 
      STATUS              — confirm listener is online + list tracked symbols
      WATCHLIST           — show all symbols with reference prices and thresholds
+     REBUY               — completely-sold names with avg buy / avg sell
+     PRICE NVDA or Q NVDA — avg sold (all sells) + current Yahoo market
      SUPPORT AAPL        — 3 recent pivot support levels (6-month Yahoo history)
      SOLD  or  SEND      — run C:\Investment\CompletelySoldAlert\run-alert.bat
                            (sends the Completely Sold price digest to WhatsApp)
+     RELOAD              — reload watchlists + Sells-sheet avg-sold cache
+     HELP  or  ?         — list commands
+
+   Full WhatsApp how-to: AlertApp\README.md
 
    The listener reacts to BOTH incoming messages AND your own OUTGOING messages
    (sent from the linked phone or the Green API web console). It never replies
@@ -72,6 +78,9 @@ WATCHLIST
     TSLA = 320.00, 5.0, 5.0
 
   Send WATCHLIST via WhatsApp to confirm what the running monitor sees.
+
+  On-demand avg sold + market: send  PRICE NVDA   or   Q NVDA
+  (see AlertApp\README.md).
 
 --------------------------------------------------------------------------------
 HOW TO RUN

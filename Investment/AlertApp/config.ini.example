@@ -38,3 +38,15 @@ drop_pct = 5.0
 [whatsapp]
 check_interval_seconds = 600
 command_poll_seconds = 2
+
+; ─────────────────────────────────────────────────────────────────
+; HOUSEKEEPING — delete old messages in the alert chat
+; First run ~2 minutes after the listener starts, then once per day.
+; ─────────────────────────────────────────────────────────────────
+[housekeeping]
+enabled = true
+max_age_hours = 24
+; How many recent chat rows to scan each run (Green API getChatHistory).
+history_count = 100
+; Cap deletes per run so a cleanup cannot block command polling for long.
+max_delete_per_run = 50
