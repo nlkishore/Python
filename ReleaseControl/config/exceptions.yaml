@@ -1,0 +1,18 @@
+# Documented leftovers that are allowed not to match the EAR equation.
+# Unknown leftovers still FAIL.
+
+exceptions:
+  - glob: "WEB-INF/classes/**/*.properties"
+    class: overlay
+    note: "GEBCUSG* / GEBBASG* instance properties — compare per same instance"
+
+  - glob: "config/**"
+    class: config_zip
+    package: "config.zip"
+    note: "Shipped as configuration zip, not inside the EAR"
+
+  - path: "META-INF/MANIFEST.MF"
+    class: generated
+
+  - glob: "**/*Test.class"
+    class: skip

@@ -4,6 +4,8 @@ Automates the step after a Bitbucket Pull Request **merges** to a market **relea
 
 Plan: `C:\MyGeneratedProjects\User-Prompts-Documentation\BITBUCKET-HOTFIX-PR-MERGE-AUTOMATION-PLAN.md`
 
+**Case 2 (read and prove, no local clone):** `C:\Python\ReleaseControl` reconciles PR files, this HotFix list, Jenkins/Artifactory binaries, and UAT vs Production deltas. Plan: `C:\MyGeneratedProjects\User-Prompts-Documentation\RELEASE-CHANGE-RECONCILE-PLAN.md`.
+
 ## Setup
 
 ```bash

@@ -1,0 +1,38 @@
+---
+description: Bitbucket/Jenkins/Artifactory use cases — reuse release_control config and remote clients; never copy config loaders or HTTP connectors
+globs: "**/ReleaseControl/**/*.py,**/HotFixAgent/**/*.py,**/*bitbucket*.py,**/*jenkins*.py,**/*artifactory*.py,**/*hotfix*.py"
+alwaysApply: false
+---
+
+# Bitbucket-related use cases — shared config and remotes
+
+Canonical package: `C:\Python\ReleaseControl`. A new feature is a CLI/orchestrator that **imports** shared factories. Do not add another `connectors.py`, `configparser` helper, or ping script.
+
+## Config (one loader)
+
+Use `release_control.connections.load_settings()` (Pydantic `Settings`, env / `.env` only). Do not copy `Settings`, hardcode URLs/tokens, or add a per-feature INI reader.
+
+## Remotes (one factory per system)
+
+```python
+# BAD — copy in the feature folder
+parser = configparser.ConfigParser()
+parser.read("config.ini")
+requests.get(url, auth=(user, token))
+
+# GOOD — import and call
+from release_control.connections import (
+    load_settings, bitbucket_client, jenkins_client, artifactory_client,
+)
+settings = load_settings()
+bb = bitbucket_client(settings)
+jk = jenkins_client(settings)
+af = artifactory_client(settings)
+```
+
+- Bitbucket is **REST only** (`BitbucketServerClient`). No local clone to list PR/HotFix files.
+- Missing API? Extend `release_control.clients.*` or `http.RestClient`. Do not fork a new HTTP client.
+- Auth is **token only** (`BITBUCKET_TOKEN`, `JENKINS_TOKEN`, `ARTIFACTORY_TOKEN`). Never login passwords or `*_PASSWORD` env vars.
+- Secrets from env only; never log tokens.
+- Do not revive `common/connectors.py` or copy `ArtifactoryBuildFinder`.
+- Case 1 write path may keep `hotfix_prep`. All new read/scan/reconcile features use `release_control.connections`.

@@ -1,0 +1,35 @@
+---
+description: Always authenticate to Bitbucket, Jenkins, and Artifactory with PAT/API tokens — never login passwords
+alwaysApply: true
+---
+
+# Token auth only (Bitbucket, Jenkins, Artifactory)
+
+Connect through **tokens**, never user login passwords.
+
+| System | Env secret | How it is sent |
+|--------|------------|----------------|
+| Bitbucket | `BITBUCKET_TOKEN` | HTTP Basic: username (`x-token-auth` or account id) + **token** |
+| Jenkins | `JENKINS_TOKEN` | HTTP Basic: Jenkins user id + **API token** |
+| Artifactory | `ARTIFACTORY_TOKEN` | `X-JFrog-Art-Api` (and/or Basic user + **token**) |
+
+## Must
+
+- Import `release_control.connections` (`bitbucket_client`, `jenkins_client`, `artifactory_client`).
+- Put secrets in `*_TOKEN` env vars / `.env` only.
+
+## Must not
+
+```python
+# BAD
+auth = (user, password)
+os.environ["BITBUCKET_PASSWORD"] = "..."
+requests.get(url, auth=(user, settings.password))
+
+# GOOD
+from release_control.connections import bitbucket_client, load_settings
+bb = bitbucket_client(load_settings())  # uses BITBUCKET_TOKEN
+```
+
+- No `password` fields, `*_PASSWORD` env vars, or hardcoded secrets.
+- HTTP Basic may place the **token** in the Basic password slot; that is still token auth, not the account password.
